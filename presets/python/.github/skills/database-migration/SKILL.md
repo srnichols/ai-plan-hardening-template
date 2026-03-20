@@ -1,0 +1,43 @@
+# Database Migration Skill
+
+## Trigger
+"Create a database migration for..." / "Add column..." / "Change schema..."
+
+## Steps
+
+### 1. Generate Migration
+```bash
+# Alembic
+alembic revision --autogenerate -m "<description>"
+
+# Raw SQL
+# Create file: migrations/NNNN_description.sql
+```
+
+### 2. Review the SQL
+- Verify column types, nullability, defaults
+- Check for backward compatibility
+- Ensure indexes on frequently queried columns
+- Verify `downgrade()` function is correct
+
+### 3. Test Locally
+```bash
+alembic upgrade head
+# Or: psql -h localhost -d contoso_dev -f migrations/NNNN_description.sql
+```
+
+### 4. Validate
+```bash
+pytest tests/integration/ -v
+```
+
+### 5. Deploy to Staging
+```bash
+alembic -x env=staging upgrade head
+```
+
+## Safety Rules
+- NEVER drop columns without a deprecation period
+- ALWAYS include `downgrade()` function
+- ALWAYS add `IF NOT EXISTS` / `IF EXISTS` guards in raw SQL
+- Test migration on a copy of production data when possible

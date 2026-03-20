@@ -1,0 +1,67 @@
+# Staging Deploy Skill
+
+## Trigger
+"Deploy to staging" / "Push to staging environment"
+
+## Steps
+
+### 1. Pre-Flight Checks
+```bash
+# Run tests
+go test ./... -count=1
+
+# Build binary
+go build -o bin/contoso-api ./cmd/api
+
+# Lint
+golangci-lint run ./...
+```
+
+### 2. Build Container
+```bash
+# Multi-stage build
+docker build -t contoso-api:staging -f Dockerfile .
+
+# Tag for registry
+docker tag contoso-api:staging registry.contoso.com/api:staging
+
+# Push
+docker push registry.contoso.com/api:staging
+```
+
+### 3. Run Migrations
+```bash
+# Apply pending migrations to staging
+migrate -path migrations -database "$STAGING_DB_URL" up
+
+# Verify migration status
+migrate -path migrations -database "$STAGING_DB_URL" version
+```
+
+### 4. Deploy
+```bash
+# Kubernetes
+kubectl apply -f k8s/staging/ --context staging
+kubectl rollout status deployment/contoso-api -n staging --timeout=120s
+
+# Or Docker Compose
+docker compose -f docker-compose.staging.yml up -d
+```
+
+### 5. Verify
+```bash
+# Health check
+curl -f https://staging-api.contoso.com/health
+
+# Version check
+curl https://staging-api.contoso.com/api/version
+
+# Smoke test
+go test ./tests/smoke/... -v -tags=smoke -env=staging
+```
+
+## Safety Rules
+- ALWAYS run tests before deploying
+- ALWAYS verify health endpoint after deploy
+- NEVER deploy to production using this skill
+- Rollback: `kubectl rollout undo deployment/contoso-api -n staging`

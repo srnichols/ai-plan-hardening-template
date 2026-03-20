@@ -1,0 +1,44 @@
+# Staging Deploy Skill
+
+## Trigger
+"Deploy to staging" / "Push to staging environment"
+
+## Steps
+
+### 1. Pre-Flight Checks
+```bash
+pytest --tb=short
+mypy src/
+ruff check src/
+```
+
+### 2. Build Container
+```bash
+docker build -t contoso-api:staging -f Dockerfile .
+docker tag contoso-api:staging registry.contoso.com/api:staging
+docker push registry.contoso.com/api:staging
+```
+
+### 3. Run Migrations
+```bash
+alembic -x env=staging upgrade head
+```
+
+### 4. Deploy
+```bash
+kubectl apply -f k8s/staging/ --context staging
+# Or: docker compose -f docker-compose.staging.yml up -d
+```
+
+### 5. Verify
+```bash
+curl -f https://staging-api.contoso.com/health
+curl https://staging-api.contoso.com/api/version
+pytest tests/smoke/ --env staging
+```
+
+## Safety Rules
+- ALWAYS run tests before deploying
+- ALWAYS verify health endpoint after deploy
+- NEVER deploy to production using this skill
+- Rollback: `kubectl rollout undo deployment/api --context staging`

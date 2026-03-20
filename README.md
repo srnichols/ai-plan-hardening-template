@@ -100,7 +100,7 @@ chmod +x setup.sh
 
 ### Instruction Files Per Preset
 
-Each preset includes **8 instruction files** that auto-load based on the file being edited:
+Each preset includes **12 instruction files** that auto-load based on the file being edited:
 
 | Instruction File | Purpose |
 |------------------|---------|
@@ -112,6 +112,47 @@ Each preset includes **8 instruction files** that auto-load based on the file be
 | `messaging.instructions.md` | Pub/sub, job queues, event-driven patterns, retry/DLQ |
 | `observability.instructions.md` | OpenTelemetry, structured logging, metrics, health checks |
 | `api-patterns.instructions.md` | REST conventions, pagination, error responses (RFC 9457) |
+| `errorhandling.instructions.md` | Exception hierarchy, ProblemDetails, error boundaries |
+| `performance.instructions.md` | Hot/cold path analysis, allocation reduction, query optimization |
+| `multi-environment.instructions.md` | Dev/staging/production config, environment detection, feature flags |
+| `version.instructions.md` | Semantic versioning, commit-driven bumps, release tagging |
+
+### Prompt Templates Per Preset
+
+Each preset includes **7 prompt templates** (`.github/prompts/`) that agents use as scaffolding recipes:
+
+| Prompt Template | Purpose |
+|-----------------|---------|
+| `new-entity.prompt.md` | Scaffold end-to-end: migration, model, repository, service, tests |
+| `new-service.prompt.md` | Service class with interface, DI, logging, validation |
+| `new-controller.prompt.md` | REST controller with auth, error mapping, OpenAPI docs |
+| `new-repository.prompt.md` | Data access layer with parameterized queries, connection pooling |
+| `new-test.prompt.md` | Unit/integration test with naming conventions, traits, mocking |
+| `bug-fix-tdd.prompt.md` | Red-Green-Refactor bug fix with regression test |
+| `new-worker.prompt.md` | Background worker/job with retry, graceful shutdown, health checks |
+
+### Agent Definitions Per Preset
+
+Each preset includes **6 agent definitions** (`.github/agents/`) — specialized reviewer/executor roles:
+
+| Agent | Purpose |
+|-------|---------|
+| `architecture-reviewer.agent.md` | Audit layer separation, pattern violations, coupling |
+| `security-reviewer.agent.md` | OWASP Top 10, injection, auth gaps, secret exposure |
+| `database-reviewer.agent.md` | SQL safety, N+1 queries, naming, indexing, migrations |
+| `performance-analyzer.agent.md` | Hot paths, allocations, async anti-patterns, caching gaps |
+| `test-runner.agent.md` | Run tests, analyze failures, diagnose root causes |
+| `deploy-helper.agent.md` | Build, push, migrate, deploy, verify health checks |
+
+### Skills Per Preset
+
+Each preset includes **3 skills** (`.github/skills/`) — multi-step executable procedures:
+
+| Skill | Purpose |
+|-------|---------|
+| `database-migration/` | Generate → validate → deploy schema migrations |
+| `staging-deploy/` | Build images → run migrations → apply manifests → verify |
+| `test-sweep/` | Run all test suites with aggregated pass/fail reporting |
 
 ### 4. Start Planning
 
@@ -162,6 +203,11 @@ ai-plan-hardening-template/
 │
 ├── presets/                           ← Tech-specific starter files
 │   ├── dotnet/                        ← .NET / C# / Blazor / ASP.NET
+│   │   └── .github/
+│   │       ├── instructions/          ← 12 instruction files
+│   │       ├── prompts/               ← 7 prompt templates
+│   │       ├── agents/                ← 6 agent definitions
+│   │       └── skills/                ← 3 multi-step skills
 │   ├── typescript/                    ← TypeScript / React / Node / Express
 │   ├── python/                        ← Python / FastAPI / Django
 │   ├── java/                          ← Java / Spring Boot / Gradle / Maven
@@ -180,12 +226,15 @@ ai-plan-hardening-template/
 
 Running `setup.ps1` (PowerShell) or `setup.sh` (Bash) with a preset:
 
-1. **Copies preset instruction files** from `presets/{stack}/` to your project root
-2. **Generates `AGENTS.md`** with patterns for your tech stack
-3. **Generates `.github/copilot-instructions.md`** with stack-specific conventions
-4. **Copies shared instruction files** (git-workflow, architecture principles)
-5. **Copies the core plan docs** to `docs/plans/`
-6. **Creates `.plan-hardening.json`** with your build/test commands for reference
+1. **Copies preset instruction files** from `presets/{stack}/` to your project root (12 instruction files)
+2. **Copies prompt templates** for scaffolding new entities, services, tests (7 prompts)
+3. **Copies agent definitions** for architecture review, security audit, testing (6 agents)
+4. **Copies skill workflows** for migrations, deployments, test sweeps (3 skills)
+5. **Generates `AGENTS.md`** with patterns for your tech stack
+6. **Generates `.github/copilot-instructions.md`** with stack-specific conventions
+7. **Copies shared instruction files** (git-workflow, architecture principles)
+8. **Copies the core plan docs** to `docs/plans/`
+9. **Creates `.plan-hardening.json`** with your build/test commands for reference
 
 **Agent mode**: Pass `-AutoDetect` (PowerShell) or `--auto-detect` (Bash) to auto-detect the tech stack from project marker files (`.csproj`, `package.json`, `pyproject.toml`, etc.).
 
