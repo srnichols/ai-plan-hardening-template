@@ -26,7 +26,7 @@
 #>
 
 param(
-    [ValidateSet('dotnet', 'typescript', 'python', 'custom')]
+    [ValidateSet('dotnet', 'typescript', 'python', 'java', 'go', 'custom')]
     [string]$Preset,
 
     [string]$ProjectPath,
@@ -100,6 +100,14 @@ function Detect-Preset([string]$TargetPath) {
     $hasSetupPy      = Test-Path (Join-Path $TargetPath "setup.py")
     $hasPipfile      = Test-Path (Join-Path $TargetPath "Pipfile")
 
+    # Java markers
+    $hasPom        = Test-Path (Join-Path $TargetPath "pom.xml")
+    $hasBuildGradle = Test-Path (Join-Path $TargetPath "build.gradle")
+    $hasBuildGradleKts = Test-Path (Join-Path $TargetPath "build.gradle.kts")
+
+    # Go markers
+    $hasGoMod = Test-Path (Join-Path $TargetPath "go.mod")
+
     # Node/TypeScript markers
     $hasPackageJson = Test-Path (Join-Path $TargetPath "package.json")
     $hasTsConfig    = Test-Path (Join-Path $TargetPath "tsconfig.json")
@@ -107,6 +115,14 @@ function Detect-Preset([string]$TargetPath) {
     if ($hasCsproj -or $hasSln -or $hasFsproj) {
         Write-Host "  AUTO-DETECT  Found .NET project markers" -ForegroundColor Magenta
         return 'dotnet'
+    }
+    if ($hasGoMod) {
+        Write-Host "  AUTO-DETECT  Found Go project markers" -ForegroundColor Magenta
+        return 'go'
+    }
+    if ($hasPom -or $hasBuildGradle -or $hasBuildGradleKts) {
+        Write-Host "  AUTO-DETECT  Found Java project markers" -ForegroundColor Magenta
+        return 'java'
     }
     if ($hasPyproject -or $hasRequirements -or $hasSetupPy -or $hasPipfile) {
         Write-Host "  AUTO-DETECT  Found Python project markers" -ForegroundColor Magenta
@@ -151,14 +167,18 @@ if (-not $Preset) {
         Write-Host "  1) dotnet      — .NET / C# / ASP.NET Core"
         Write-Host "  2) typescript  — TypeScript / React / Node.js / Express"
         Write-Host "  3) python      — Python / FastAPI / SQLAlchemy"
-        Write-Host "  4) custom      — Shared files only (add your own instructions)"
+        Write-Host "  4) java        — Java / Spring Boot / Gradle / Maven"
+        Write-Host "  5) go          — Go / Chi / Gin / Standard Library"
+        Write-Host "  6) custom      — Shared files only (add your own instructions)"
         Write-Host ""
-        $choice = Prompt-Value "Select preset (1-4 or name)" "1"
+        $choice = Prompt-Value "Select preset (1-6 or name)" "1"
         $Preset = switch ($choice) {
             '1' { 'dotnet' }
             '2' { 'typescript' }
             '3' { 'python' }
-            '4' { 'custom' }
+            '4' { 'java' }
+            '5' { 'go' }
+            '6' { 'custom' }
             default { $choice }
         }
     }
@@ -168,6 +188,8 @@ $stackLabel = switch ($Preset) {
     'dotnet'     { '.NET / C# / ASP.NET Core' }
     'typescript' { 'TypeScript / React / Node.js' }
     'python'     { 'Python / FastAPI' }
+    'java'       { 'Java / Spring Boot' }
+    'go'         { 'Go / Standard Library' }
     'custom'     { 'Custom (configure manually)' }
 }
 

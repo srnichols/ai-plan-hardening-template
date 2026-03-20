@@ -70,6 +70,8 @@ The wizard bootstraps your `.github/instructions/`, `AGENTS.md`, and `copilot-in
 .\setup.ps1 -Preset dotnet
 .\setup.ps1 -Preset typescript
 .\setup.ps1 -Preset python
+.\setup.ps1 -Preset java
+.\setup.ps1 -Preset go
 ```
 
 ```bash
@@ -81,6 +83,8 @@ chmod +x setup.sh
 ./setup.sh --preset dotnet
 ./setup.sh --preset typescript
 ./setup.sh --preset python
+./setup.sh --preset java
+./setup.sh --preset go
 ```
 
 ### 3. Available Presets
@@ -90,6 +94,8 @@ chmod +x setup.sh
 | `dotnet` | .NET / C# / Blazor / ASP.NET Core | `dotnet build` | `dotnet test` |
 | `typescript` | TypeScript / React / Node.js / Express | `pnpm build` | `pnpm test` |
 | `python` | Python / FastAPI / Django | `pytest` | `pytest --cov` |
+| `java` | Java / Spring Boot / Gradle / Maven | `./gradlew build` | `./gradlew test` |
+| `go` | Go / Chi / Gin / Standard Library | `go build ./...` | `go test ./...` |
 | `custom` | Any stack | (you configure) | (you configure) |
 
 ### 4. Start Planning
@@ -128,7 +134,9 @@ ai-plan-hardening-template/
 │   └── examples/
 │       ├── Phase-DOTNET-EXAMPLE.md    ← .NET worked example
 │       ├── Phase-TYPESCRIPT-EXAMPLE.md ← TypeScript worked example
-│       └── Phase-PYTHON-EXAMPLE.md    ← Python worked example
+│       ├── Phase-PYTHON-EXAMPLE.md    ← Python worked example
+│       ├── Phase-JAVA-EXAMPLE.md      ← Java worked example
+│       └── Phase-GO-EXAMPLE.md        ← Go worked example
 │
 ├── .github/
 │   ├── copilot-instructions.md        ← Minimal (setup wizard fills this)
@@ -141,6 +149,8 @@ ai-plan-hardening-template/
 │   ├── dotnet/                        ← .NET / C# / Blazor / ASP.NET
 │   ├── typescript/                    ← TypeScript / React / Node / Express
 │   ├── python/                        ← Python / FastAPI / Django
+│   ├── java/                          ← Java / Spring Boot / Gradle / Maven
+│   ├── go/                            ← Go / Chi / Gin / Standard Library
 │   └── shared/                        ← Files common to ALL presets
 │
 └── templates/                         ← Raw templates for manual setup

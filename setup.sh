@@ -7,7 +7,7 @@
 #   ./setup.sh                  # Interactive mode
 #   ./setup.sh --force          # Overwrite existing files
 #
-# Presets: dotnet, typescript, python, custom
+# Presets: dotnet, typescript, python, java, go, custom
 
 set -euo pipefail
 
@@ -35,7 +35,7 @@ while [[ $# -gt 0 ]]; do
         --force|-f)   FORCE=true; shift ;;
         --auto-detect|-a) AUTO_DETECT=true; shift ;;
         --help|-h)
-            echo "Usage: ./setup.sh [--preset dotnet|typescript|python|custom] [--path DIR] [--name NAME] [--force] [--auto-detect]"
+            echo "Usage: ./setup.sh [--preset dotnet|typescript|python|java|go|custom] [--path DIR] [--name NAME] [--force] [--auto-detect]"
             exit 0 ;;
         *) red "Unknown option: $1"; exit 1 ;;
     esac
@@ -107,6 +107,20 @@ detect_preset() {
         return
     fi
 
+    # Go markers
+    if [[ -f "$target/go.mod" ]]; then
+        yellow "  AUTO-DETECT  Found Go project markers"
+        echo "go"
+        return
+    fi
+
+    # Java markers
+    if [[ -f "$target/pom.xml" ]] || [[ -f "$target/build.gradle" ]] || [[ -f "$target/build.gradle.kts" ]]; then
+        yellow "  AUTO-DETECT  Found Java project markers"
+        echo "java"
+        return
+    fi
+
     # Python markers
     if [[ -f "$target/pyproject.toml" ]] || [[ -f "$target/requirements.txt" ]] || [[ -f "$target/setup.py" ]] || [[ -f "$target/Pipfile" ]]; then
         yellow "  AUTO-DETECT  Found Python project markers"
@@ -162,14 +176,18 @@ if [[ -z "$PRESET" ]]; then
         echo "  1) dotnet      — .NET / C# / ASP.NET Core"
         echo "  2) typescript  — TypeScript / React / Node.js / Express"
         echo "  3) python      — Python / FastAPI / SQLAlchemy"
-        echo "  4) custom      — Shared files only (add your own instructions)"
+        echo "  4) java        — Java / Spring Boot / Gradle / Maven"
+        echo "  5) go          — Go / Chi / Gin / Standard Library"
+        echo "  6) custom      — Shared files only (add your own instructions)"
         echo ""
-        choice="$(prompt_value "Select preset (1-4 or name)" "1")"
+        choice="$(prompt_value "Select preset (1-6 or name)" "1")"
         case "$choice" in
             1|dotnet)     PRESET="dotnet" ;;
             2|typescript) PRESET="typescript" ;;
             3|python)     PRESET="python" ;;
-            4|custom)     PRESET="custom" ;;
+            4|java)       PRESET="java" ;;
+            5|go)         PRESET="go" ;;
+            6|custom)     PRESET="custom" ;;
             *)            PRESET="$choice" ;;
         esac
     fi
@@ -179,6 +197,8 @@ case "$PRESET" in
     dotnet)     STACK_LABEL=".NET / C# / ASP.NET Core" ;;
     typescript) STACK_LABEL="TypeScript / React / Node.js" ;;
     python)     STACK_LABEL="Python / FastAPI" ;;
+    java)       STACK_LABEL="Java / Spring Boot" ;;
+    go)         STACK_LABEL="Go / Standard Library" ;;
     custom)     STACK_LABEL="Custom (configure manually)" ;;
     *)          red "Unknown preset: $PRESET"; exit 1 ;;
 esac

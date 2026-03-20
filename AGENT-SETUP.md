@@ -31,12 +31,14 @@ Scan the target project root for these marker files to determine the correct pre
 | Marker File(s) | Preset | Stack Label |
 |----------------|--------|-------------|
 | `*.csproj`, `*.sln`, `*.fsproj` | `dotnet` | .NET / C# / ASP.NET Core |
+| `go.mod` | `go` | Go / Standard Library |
+| `pom.xml`, `build.gradle`, `build.gradle.kts` | `java` | Java / Spring Boot |
 | `package.json` + (`tsconfig.json` OR `*.ts` files) | `typescript` | TypeScript / React / Node.js |
 | `package.json` WITHOUT TypeScript markers | `typescript` | TypeScript / React / Node.js |
 | `requirements.txt`, `pyproject.toml`, `setup.py`, `Pipfile` | `python` | Python / FastAPI |
 | None of the above | `custom` | Custom (configure manually) |
 
-**Priority rule**: If multiple markers exist (e.g., `.csproj` + `package.json`), pick the one that matches the primary application — check for a `Program.cs` or `Startup.cs` (→ dotnet) vs `src/index.ts` (→ typescript).
+**Priority rule**: If multiple markers exist (e.g., `.csproj` + `package.json`), pick the one that matches the primary application — check for a `Program.cs` or `Startup.cs` (→ dotnet), `go.mod` (→ go), `pom.xml` (→ java) vs `src/index.ts` (→ typescript).
 
 ### Step 2: Run the Setup Script Non-Interactively
 
