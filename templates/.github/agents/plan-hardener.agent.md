@@ -4,7 +4,7 @@ name: "Plan Hardener"
 tools: [read, search, editFiles]
 handoffs:
   - agent: "executor"
-    reason: "Plan is hardened and all TBDs resolved — ready for slice-by-slice execution."
+    label: "Start Execution →"
     send: false
     prompt: "Execute the hardened plan slice-by-slice. Read docs/plans/AI-Plan-Hardening-Runbook.md and the hardened plan file first."
 ---

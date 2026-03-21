@@ -4,7 +4,7 @@ name: "Executor"
 tools: [read, search, editFiles, runCommands]
 handoffs:
   - agent: "reviewer-gate"
-    reason: "All slices executed and completeness sweep passed — ready for independent review."
+    label: "Run Review Gate →"
     send: false
     prompt: "Audit the completed phase for drift and violations. Read docs/plans/AI-Plan-Hardening-Runbook.md and the hardened plan file first."
 ---
