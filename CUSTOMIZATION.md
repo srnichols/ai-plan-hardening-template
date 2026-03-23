@@ -21,22 +21,26 @@ The wizard generates a starter file. Customize it with:
 
 ### 2. Add Domain-Specific Instruction Files
 
-The presets include 12 instruction files (database, testing, security, deploy, caching, messaging, observability, api-patterns, errorhandling, performance, multi-environment, version). Add your own for project-specific domains:
+The presets include 15 instruction files (16 for TypeScript, which adds `frontend.instructions.md`). Add your own for project-specific domains:
 
 ```
 .github/instructions/
 ├── architecture-principles.instructions.md  ← From preset
-├── database.instructions.md                 ← From preset
-├── testing.instructions.md                  ← From preset
-├── security.instructions.md                 ← From preset
-├── deploy.instructions.md                   ← From preset
-├── caching.instructions.md                  ← From preset
-├── messaging.instructions.md                ← From preset
-├── observability.instructions.md            ← From preset
 ├── api-patterns.instructions.md             ← From preset
+├── auth.instructions.md                     ← From preset
+├── caching.instructions.md                  ← From preset
+├── dapr.instructions.md                     ← From preset
+├── database.instructions.md                 ← From preset
+├── deploy.instructions.md                   ← From preset
 ├── errorhandling.instructions.md            ← From preset
-├── performance.instructions.md              ← From preset
+├── frontend.instructions.md                 ← From preset (TypeScript only)
+├── graphql.instructions.md                  ← From preset
+├── messaging.instructions.md                ← From preset
 ├── multi-environment.instructions.md        ← From preset
+├── observability.instructions.md            ← From preset
+├── performance.instructions.md              ← From preset
+├── security.instructions.md                 ← From preset
+├── testing.instructions.md                  ← From preset
 ├── version.instructions.md                  ← From preset
 ├── git-workflow.instructions.md             ← From shared
 │
@@ -240,9 +244,11 @@ The Pre-flight Prompt in the Instructions file checks for guardrail files. Updat
    For each domain detected, confirm the guardrail file exists:
    - UI/Component/Frontend → .github/instructions/frontend.instructions.md
    - Database/SQL/Repository → .github/instructions/database.instructions.md
-   - API/Route/Controller → .github/instructions/api.instructions.md
-   - Auth/OAuth/JWT → .github/instructions/security.instructions.md
+   - API/Route/Controller → .github/instructions/api-patterns.instructions.md
+   - Auth/OAuth/JWT/OIDC → .github/instructions/auth.instructions.md
+   - GraphQL/Schema/Resolver → .github/instructions/graphql.instructions.md
    - Docker/K8s/Deploy → .github/instructions/deploy.instructions.md
+   - Security/CORS/Secrets → .github/instructions/security.instructions.md
    - <YOUR DOMAIN> → .github/instructions/<your-domain>.instructions.md
 ```
 
@@ -271,26 +277,36 @@ Review checklist:
 To contribute a preset for a new tech stack:
 
 1. Create `presets/your-stack/` directory
-2. Add **instruction files** (`.github/instructions/` — 12 files):
-   - `database.instructions.md` — ORM/query patterns
-   - `testing.instructions.md` — Test framework patterns  
-   - `security.instructions.md` — Security patterns
-   - `deploy.instructions.md` — Deployment patterns
-   - `caching.instructions.md` — Cache strategies
-   - `messaging.instructions.md` — Pub/sub, queues, event-driven patterns
-   - `observability.instructions.md` — Logging, metrics, tracing
+2. Add **instruction files** (`.github/instructions/` — 15 files):
    - `api-patterns.instructions.md` — REST conventions, error responses
+   - `auth.instructions.md` — JWT/OIDC, RBAC, multi-tenant isolation, API keys
+   - `caching.instructions.md` — Cache strategies
+   - `dapr.instructions.md` — Dapr sidecar patterns, state stores, pub/sub
+   - `database.instructions.md` — ORM/query patterns
+   - `deploy.instructions.md` — Deployment patterns
    - `errorhandling.instructions.md` — Exception hierarchy, error boundaries
-   - `performance.instructions.md` — Hot/cold path, allocation reduction
+   - `graphql.instructions.md` — Schema design, resolvers, DataLoader
+   - `messaging.instructions.md` — Pub/sub, queues, event-driven patterns
    - `multi-environment.instructions.md` — Dev/staging/prod config
+   - `observability.instructions.md` — Logging, metrics, tracing
+   - `performance.instructions.md` — Hot/cold path, allocation reduction
+   - `security.instructions.md` — Security patterns
+   - `testing.instructions.md` — Test framework patterns
    - `version.instructions.md` — Semantic versioning, release tagging
-3. Add **prompt templates** (`.github/prompts/` — 7 files):
-   - `new-entity.prompt.md` — End-to-end entity scaffolding
-   - `new-service.prompt.md` — Service class with DI, logging
-   - `new-controller.prompt.md` — REST controller with auth, error mapping
-   - `new-repository.prompt.md` — Data access layer
-   - `new-test.prompt.md` — Unit/integration test
+3. Add **prompt templates** (`.github/prompts/` — 14 files):
    - `bug-fix-tdd.prompt.md` — Red-Green-Refactor bug fix
+   - `new-config.prompt.md` — Typed configuration with validation
+   - `new-controller.prompt.md` — REST controller with auth, error mapping
+   - `new-dockerfile.prompt.md` — Multi-stage Dockerfile
+   - `new-dto.prompt.md` — Request/response DTOs with validation
+   - `new-entity.prompt.md` — End-to-end entity scaffolding
+   - `new-error-types.prompt.md` — Custom exception hierarchy
+   - `new-event-handler.prompt.md` — Event handler with retry, DLQ
+   - `new-graphql-resolver.prompt.md` — GraphQL resolver with DataLoader
+   - `new-middleware.prompt.md` — Request pipeline middleware
+   - `new-repository.prompt.md` — Data access layer
+   - `new-service.prompt.md` — Service class with DI, logging
+   - `new-test.prompt.md` — Unit/integration test
    - `new-worker.prompt.md` — Background worker/job
 4. Add **agent definitions** (`.github/agents/` — 6 files):
    - `architecture-reviewer.agent.md` — Layer separation audit
@@ -336,8 +352,8 @@ The essential files for ongoing use are:
 
 ```
 docs/plans/                    ← Runbook + your plans
-.github/instructions/          ← Guardrail files (12 per preset)
-.github/prompts/               ← Scaffolding recipes (7 prompt templates)
+.github/instructions/          ← Guardrail files (15 per preset, 16 for TypeScript)
+.github/prompts/               ← Scaffolding recipes (14 prompt templates)
 .github/agents/                ← Reviewer/executor roles (11 agent definitions)
 .github/skills/                ← Multi-step procedures (3 skills)
 .github/copilot-instructions.md

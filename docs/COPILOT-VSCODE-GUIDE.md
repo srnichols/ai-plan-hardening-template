@@ -318,15 +318,22 @@ Create a Product entity with name, price, and category fields.
 
 Or use the VS Code **prompt picker** — open the Command Palette (`Ctrl+Shift+P`) → "GitHub Copilot: Use Prompt" → select a prompt template.
 
-**Available prompts** (7 per preset):
+**Available prompts** (14 per preset):
 | Template | When to Use |
 |----------|-------------|
-| `new-entity.prompt.md` | Adding a new database-backed entity end-to-end |
-| `new-service.prompt.md` | Creating a business logic service with DI |
-| `new-controller.prompt.md` | Adding a REST API endpoint |
-| `new-repository.prompt.md` | Creating a data access layer |
-| `new-test.prompt.md` | Writing unit or integration tests |
 | `bug-fix-tdd.prompt.md` | Fixing a bug using Red-Green-Refactor |
+| `new-config.prompt.md` | Creating typed configuration with validation |
+| `new-controller.prompt.md` | Adding a REST API endpoint |
+| `new-dockerfile.prompt.md` | Creating a multi-stage Dockerfile |
+| `new-dto.prompt.md` | Defining request/response DTOs with validation |
+| `new-entity.prompt.md` | Adding a new database-backed entity end-to-end |
+| `new-error-types.prompt.md` | Defining custom exception hierarchy |
+| `new-event-handler.prompt.md` | Creating an event/message handler with retry |
+| `new-graphql-resolver.prompt.md` | Adding a GraphQL resolver with DataLoader |
+| `new-middleware.prompt.md` | Adding request pipeline middleware |
+| `new-repository.prompt.md` | Creating a data access layer |
+| `new-service.prompt.md` | Creating a business logic service with DI |
+| `new-test.prompt.md` | Writing unit or integration tests |
 | `new-worker.prompt.md` | Adding a background job or scheduled task |
 
 #### Agent Definitions (`.github/agents/`)
@@ -487,8 +494,8 @@ only what Slice 3 requires.
 │  Workspace:     @workspace <search query>                       │
 │                                                                 │
 │  AGENTIC FILES                                                  │
-│    Prompts:  .github/prompts/*.prompt.md  (7 scaffolding recipes)│
-│    Agents:   .github/agents/*.agent.md    (6 reviewer/executor) │
+│    Prompts:  .github/prompts/*.prompt.md  (14 scaffolding recipes)│
+│    Agents:   .github/agents/*.agent.md    (11 reviewer/executor)│
 │    Skills:   .github/skills/*/SKILL.md    (3 procedures)        │
 │                                                                 │
 │  SESSION 1 — Harden                                             │

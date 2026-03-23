@@ -120,35 +120,46 @@ chmod +x setup.sh
 
 ### Instruction Files Per Preset
 
-Each preset includes **12 instruction files** that auto-load based on the file being edited:
+Each preset includes **15 instruction files** (16 for TypeScript) that auto-load based on the file being edited:
 
 | Instruction File | Purpose |
 |------------------|---------|
-| `database.instructions.md` | ORM/query patterns, migrations, connection management |
-| `testing.instructions.md` | Unit tests, integration tests, test containers |
-| `security.instructions.md` | Auth, input validation, secret management, CORS |
-| `deploy.instructions.md` | Dockerfiles, health checks, container optimization |
-| `caching.instructions.md` | Redis, in-memory cache, TTL strategies, cache-aside pattern |
-| `messaging.instructions.md` | Pub/sub, job queues, event-driven patterns, retry/DLQ |
-| `observability.instructions.md` | OpenTelemetry, structured logging, metrics, health checks |
 | `api-patterns.instructions.md` | REST conventions, pagination, error responses (RFC 9457) |
+| `auth.instructions.md` | JWT/OIDC, RBAC, multi-tenant isolation, API keys, auth testing |
+| `caching.instructions.md` | Redis, in-memory cache, TTL strategies, cache-aside pattern |
+| `dapr.instructions.md` | Dapr sidecar patterns, state stores, pub/sub, service invocation |
+| `database.instructions.md` | ORM/query patterns, migrations, connection management |
+| `deploy.instructions.md` | Dockerfiles, health checks, container optimization |
 | `errorhandling.instructions.md` | Exception hierarchy, ProblemDetails, error boundaries |
-| `performance.instructions.md` | Hot/cold path analysis, allocation reduction, query optimization |
+| `frontend.instructions.md` | Component patterns, state management, accessibility *(TypeScript only)* |
+| `graphql.instructions.md` | Schema design, resolvers, DataLoader, auth context |
+| `messaging.instructions.md` | Pub/sub, job queues, event-driven patterns, retry/DLQ |
 | `multi-environment.instructions.md` | Dev/staging/production config, environment detection, feature flags |
+| `observability.instructions.md` | OpenTelemetry, structured logging, metrics, health checks |
+| `performance.instructions.md` | Hot/cold path analysis, allocation reduction, query optimization |
+| `security.instructions.md` | Input validation, secret management, CORS, rate limiting |
+| `testing.instructions.md` | Unit tests, integration tests, test containers |
 | `version.instructions.md` | Semantic versioning, commit-driven bumps, release tagging |
 
 ### Prompt Templates Per Preset
 
-Each preset includes **7 prompt templates** (`.github/prompts/`) that agents use as scaffolding recipes:
+Each preset includes **14 prompt templates** (`.github/prompts/`) that agents use as scaffolding recipes:
 
 | Prompt Template | Purpose |
-|-----------------|---------|
-| `new-entity.prompt.md` | Scaffold end-to-end: migration, model, repository, service, tests |
-| `new-service.prompt.md` | Service class with interface, DI, logging, validation |
-| `new-controller.prompt.md` | REST controller with auth, error mapping, OpenAPI docs |
-| `new-repository.prompt.md` | Data access layer with parameterized queries, connection pooling |
-| `new-test.prompt.md` | Unit/integration test with naming conventions, traits, mocking |
+|-----------------|--------|
 | `bug-fix-tdd.prompt.md` | Red-Green-Refactor bug fix with regression test |
+| `new-config.prompt.md` | Typed configuration with validation, environment binding |
+| `new-controller.prompt.md` | REST controller with auth, error mapping, OpenAPI docs |
+| `new-dockerfile.prompt.md` | Multi-stage Dockerfile with security best practices |
+| `new-dto.prompt.md` | Request/response DTOs with validation rules |
+| `new-entity.prompt.md` | Scaffold end-to-end: migration, model, repository, service, tests |
+| `new-error-types.prompt.md` | Custom exception hierarchy with global error handler |
+| `new-event-handler.prompt.md` | Event/message handler with retry, DLQ, idempotency |
+| `new-graphql-resolver.prompt.md` | GraphQL resolver with DataLoader, auth context |
+| `new-middleware.prompt.md` | Request pipeline middleware with ordering conventions |
+| `new-repository.prompt.md` | Data access layer with parameterized queries, connection pooling |
+| `new-service.prompt.md` | Service class with interface, DI, logging, validation |
+| `new-test.prompt.md` | Unit/integration test with naming conventions, traits, mocking |
 | `new-worker.prompt.md` | Background worker/job with retry, graceful shutdown, health checks |
 
 ### Agent Definitions Per Preset
@@ -311,8 +322,8 @@ ai-plan-hardening-template/
 ├── presets/                           ← Tech-specific starter files
 │   ├── dotnet/                        ← .NET / C# / Blazor / ASP.NET
 │   │   └── .github/
-│   │       ├── instructions/          ← 12 instruction files
-│   │       ├── prompts/               ← 7 prompt templates
+│   │       ├── instructions/          ← 15 instruction files (16 for TypeScript)
+│   │       ├── prompts/               ← 14 prompt templates
 │   │       ├── agents/                ← 6 stack-specific agent definitions
 │   │       └── skills/                ← 3 multi-step skills
 │   ├── typescript/                    ← TypeScript / React / Node / Express
@@ -333,8 +344,8 @@ ai-plan-hardening-template/
 
 Running `setup.ps1` (PowerShell) or `setup.sh` (Bash) with a preset:
 
-1. **Copies preset instruction files** from `presets/{stack}/` to your project root (12 instruction files)
-2. **Copies prompt templates** for scaffolding new entities, services, tests (7 prompts)
+1. **Copies preset instruction files** from `presets/{stack}/` to your project root (15 instruction files, 16 for TypeScript)
+2. **Copies prompt templates** for scaffolding new entities, services, tests (14 prompts)
 3. **Copies agent definitions** for architecture review, security audit, testing (6 stack-specific + 5 shared agents)
 4. **Copies skill workflows** for migrations, deployments, test sweeps (3 skills)
 5. **Generates `AGENTS.md`** with patterns for your tech stack

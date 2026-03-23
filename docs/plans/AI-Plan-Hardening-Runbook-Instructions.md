@@ -85,8 +85,10 @@ Run these checks and report results. STOP if any check fails.
    For each domain detected, confirm the matching guardrail file exists:
    - UI/Component/Frontend/Razor/React/Vue → .github/instructions/frontend.instructions.md (or blazor/react specific)
    - Database/SQL/Repository/ORM/migration → .github/instructions/database.instructions.md
-   - API/Route/Controller/GraphQL/REST → .github/instructions/api-patterns.instructions.md
-   - Auth/OAuth/JWT/session → .github/instructions/security.instructions.md
+   - API/Route/Controller/REST → .github/instructions/api-patterns.instructions.md
+   - Auth/OAuth/JWT/OIDC/session → .github/instructions/auth.instructions.md
+   - GraphQL/Schema/Resolver → .github/instructions/graphql.instructions.md
+   - Security/CORS/Secrets/Validation → .github/instructions/security.instructions.md
    - Docker/K8s/deploy/CI → .github/instructions/deploy.instructions.md
    - Test/spec/coverage → .github/instructions/testing.instructions.md
    Report: domains detected + guardrail status for each.
