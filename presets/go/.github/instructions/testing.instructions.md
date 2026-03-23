@@ -1,6 +1,6 @@
 ---
 description: Go testing patterns — testing package, testcontainers, httptest, table-driven tests
-applyTo: '**/*_test.go'
+applyTo: '**/*_test.go,**/*_bench_test.go,**/testdata/**,**/testutil/**,**/mocks/**'
 ---
 
 # Go Testing Patterns
@@ -113,6 +113,86 @@ func TestGetUserHandler(t *testing.T) {
     assert.Equal(t, http.StatusOK, rec.Code)
     assert.Contains(t, rec.Body.String(), "Test")
 }
+```
+
+### E2E Tests (Full HTTP Flow)
+```go
+//go:build e2e
+
+func TestE2E_CreateAndGetProducer(t *testing.T) {
+    // Use a real running server (started via docker-compose or test setup)
+    baseURL := os.Getenv("E2E_BASE_URL")
+    if baseURL == "" {
+        baseURL = "http://localhost:8080"
+    }
+    client := &http.Client{Timeout: 10 * time.Second}
+
+    // Create
+    body := `{"name":"Test Farm","contactEmail":"test@example.com"}`
+    resp, err := client.Post(baseURL+"/api/producers", "application/json", strings.NewReader(body))
+    require.NoError(t, err)
+    require.Equal(t, http.StatusCreated, resp.StatusCode)
+
+    var created struct {
+        ID string `json:"id"`
+    }
+    require.NoError(t, json.NewDecoder(resp.Body).Decode(&created))
+    resp.Body.Close()
+
+    // Verify
+    resp, err = client.Get(baseURL + "/api/producers/" + created.ID)
+    require.NoError(t, err)
+    require.Equal(t, http.StatusOK, resp.StatusCode)
+    resp.Body.Close()
+}
+```
+
+### E2E with Playwright (Browser Tests)
+```go
+//go:build e2e
+
+import pw "github.com/playwright-community/playwright-go"
+
+func TestE2E_LoginFlow(t *testing.T) {
+    err := pw.Install()
+    require.NoError(t, err)
+
+    browser, err := pw.Run()
+    require.NoError(t, err)
+    defer browser.Stop()
+
+    bw, err := browser.Chromium.Launch(pw.BrowserTypeLaunchOptions{Headless: pw.Bool(true)})
+    require.NoError(t, err)
+    defer bw.Close()
+
+    page, err := bw.NewPage()
+    require.NoError(t, err)
+
+    _, err = page.Goto(os.Getenv("E2E_BASE_URL") + "/login")
+    require.NoError(t, err)
+
+    require.NoError(t, page.Fill("#email", "admin@test.com"))
+    require.NoError(t, page.Fill("#password", "testpass"))
+    require.NoError(t, page.Click("#login-btn"))
+
+    // Wait for redirect
+    err = page.WaitForURL("**/dashboard")
+    require.NoError(t, err)
+
+    title, err := page.Title()
+    require.NoError(t, err)
+    assert.Contains(t, title, "Dashboard")
+}
+```
+
+### E2E Anti-Patterns
+```
+❌ Hardcoded URLs — use E2E_BASE_URL env var
+❌ Tests that depend on execution order — each test must be self-contained
+❌ No cleanup — always delete test data or use isolated tenant
+❌ Missing timeouts on HTTP clients — default Go client has no timeout
+❌ Flaky selectors in Playwright — use data-testid attributes
+❌ Running E2E in unit test suite — use //go:build e2e tag
 ```
 
 ## Conventions

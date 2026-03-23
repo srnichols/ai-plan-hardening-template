@@ -171,3 +171,4 @@ public class GraphQLExceptionResolver extends DataFetcherExceptionResolverAdapte
 - `database.instructions.md` — JPA repositories, batch query patterns
 - `security.instructions.md` — Spring Security, @PreAuthorize
 - `performance.instructions.md` — Caching, virtual threads
+- `dapr.instructions.md` — State management, workflow execution

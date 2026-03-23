@@ -100,6 +100,46 @@ export function cacheMiddleware(ttl: number) {
 }
 ```
 
+## Multi-Tenant Caching
+
+```typescript
+// ✅ ALWAYS include tenantId in cache keys — never share cache across tenants
+function tenantCacheKey(tenantId: string, entity: string, id: string): string {
+  return `${tenantId}:${entity}:${id}`;
+}
+
+export async function getProducerForTenant(
+  tenantId: string,
+  producerId: string,
+): Promise<Producer | null> {
+  const key = tenantCacheKey(tenantId, 'producer', producerId);
+  const cached = await redis.get(key);
+  if (cached) return JSON.parse(cached) as Producer;
+
+  const producer = await producerRepository.findById(producerId, tenantId);
+  if (producer) {
+    await redis.set(key, JSON.stringify(producer), 'EX', 900);
+  }
+  return producer;
+}
+
+// ✅ Invalidate within tenant scope only
+export async function invalidateTenantCache(tenantId: string, entity: string, id: string): Promise<void> {
+  await redis.del(tenantCacheKey(tenantId, entity, id));
+}
+
+// ✅ Bulk invalidate all keys for a tenant+entity (use scan, not KEYS *)
+export async function invalidateTenantEntity(tenantId: string, entity: string): Promise<void> {
+  const pattern = `${tenantId}:${entity}:*`;
+  let cursor = '0';
+  do {
+    const [next, keys] = await redis.scan(cursor, 'MATCH', pattern, 'COUNT', 100);
+    cursor = next;
+    if (keys.length > 0) await redis.del(...keys);
+  } while (cursor !== '0');
+}
+```
+
 ## Anti-Patterns
 
 ```

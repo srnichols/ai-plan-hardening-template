@@ -330,3 +330,4 @@ public class GraphQLDiagnosticListener : ExecutionDiagnosticEventListener
 - `security.instructions.md` — JWT validation, authorization policies
 - `performance.instructions.md` — Hot-path optimization, DataLoader batching
 - `observability.instructions.md` — Distributed tracing integration
+- `dapr.instructions.md` — State management for resolver cache invalidation

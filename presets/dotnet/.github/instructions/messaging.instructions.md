@@ -166,7 +166,5 @@ Idempotency store options: database table with unique constraint on `event_id`, 
 - `observability.instructions.md` — Distributed tracing, event logging
 - `errorhandling.instructions.md` — Dead letter queues, retry logic
 - `database.instructions.md` — Idempotency stores, transactional outbox
-❌ No idempotency check (duplicate events cause duplicate processing)
-❌ Tight coupling to transport (use abstractions like Dapr/MassTransit)
-❌ Large payloads in events (pass IDs, not full objects)
-```
+- `security.instructions.md` — Tenant validation in events, message signing
+- `testing.instructions.md` — Consumer integration testing patterns

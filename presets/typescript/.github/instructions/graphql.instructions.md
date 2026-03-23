@@ -202,3 +202,4 @@ const server = new ApolloServer({
 - `database.instructions.md` — Repository patterns, parameterized queries
 - `security.instructions.md` — JWT validation, Zod schemas
 - `performance.instructions.md` — Async patterns, connection pooling
+- `dapr.instructions.md` — State management, workflow execution

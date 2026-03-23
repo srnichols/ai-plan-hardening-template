@@ -222,6 +222,166 @@ allSecrets, err := client.GetBulkSecret(ctx, "secretstore", nil)
 
 ---
 
+## Component Configuration
+
+### State Store
+```yaml
+# dapr/components/redis-statestore.yaml
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: statestore
+spec:
+  type: state.redis
+  version: v1
+  metadata:
+    - name: redisHost
+      value: redis:6379
+    - name: actorStateStore      # Required if using workflows
+      value: "true"
+    - name: keyPrefix
+      value: name                # Keys prefixed with app-id automatically
+  scopes:                        # ALWAYS scope components
+    - my-api-service
+    - my-worker-service
+```
+
+### Pub/Sub (NATS JetStream)
+```yaml
+# dapr/components/nats-pubsub.yaml
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: pubsub
+spec:
+  type: pubsub.jetstream
+  version: v1
+  metadata:
+    - name: natsURL
+      value: nats://nats:4222
+    - name: durableSubscriptionName
+      value: my-consumer
+    - name: flowControl
+      value: "true"
+  scopes:
+    - my-api-service
+    - my-worker-service
+```
+
+### Component Scoping Rules
+- **ALWAYS** define `scopes` on every component — unscoped components are accessible to all services
+- **NEVER** inline connection strings or passwords — use `secretKeyRef`
+- **ALWAYS** version component files in source control
+- **SEPARATE** component directories per environment: `dapr/components/dev/`, `dapr/components/prod/`
+
+---
+
+## Multi-Tenant Isolation Checklist
+
+| Layer | Pattern | Example |
+|-------|---------|---------|
+| **State keys** | `{tenantId}-{entityId}` prefix | `acme-order-123` |
+| **Pub/sub topics** | Tenant in subject hierarchy | `events.order.acme-corp` |
+| **State metadata** | `tenantId` in metadata dictionary | Enables audit/query |
+| **Subscriptions** | Wildcard + filter in handler | `events.order.*` |
+| **Secrets** | Component scoping per service | `scopes: [api-service]` |
+| **Workflows** | Tenant in workflow input | `OrderRequest.TenantID` |
+
+---
+
+## Health Checks
+
+```go
+// Dapr sidecar health check for readiness probes
+func daprHealthHandler(w http.ResponseWriter, r *http.Request) {
+    resp, err := http.Get(os.Getenv("DAPR_HTTP_ENDPOINT") + "/v1.0/healthz")
+    if err != nil || resp.StatusCode != http.StatusOK {
+        w.WriteHeader(http.StatusServiceUnavailable)
+        json.NewEncoder(w).Encode(map[string]string{"status": "unhealthy", "component": "dapr-sidecar"})
+        return
+    }
+    w.WriteHeader(http.StatusOK)
+    json.NewEncoder(w).Encode(map[string]string{"status": "healthy"})
+}
+
+// Register in your router
+mux.HandleFunc("/healthz", daprHealthHandler)
+```
+
+---
+
+## Observability
+
+```go
+// Dapr propagates W3C trace context automatically through sidecars.
+// Ensure your OpenTelemetry setup captures Dapr spans:
+tp := sdktrace.NewTracerProvider(
+    sdktrace.WithBatcher(exporter),
+    sdktrace.WithResource(resource.NewWithAttributes(
+        semconv.SchemaURL,
+        semconv.ServiceNameKey.String("my-service"),
+    )),
+)
+otel.SetTracerProvider(tp)
+otel.SetTextMapPropagator(propagation.TraceContext{}) // W3C trace context
+
+// Structured logging with Dapr context
+slog.Info("processing event",
+    "eventId", event.ID,
+    "tenantId", event.TenantID,
+    "traceId", span.SpanContext().TraceID().String())
+```
+
+---
+
+## Resilience & Retry
+
+### Resiliency Policy
+```yaml
+# dapr/components/resiliency.yaml
+apiVersion: dapr.io/v1alpha1
+kind: Resiliency
+metadata:
+  name: default-resiliency
+spec:
+  policies:
+    retries:
+      pubsubRetry:
+        policy: exponential
+        maxInterval: 30s
+        maxRetries: 5
+      stateRetry:
+        policy: constant
+        duration: 2s
+        maxRetries: 3
+    circuitBreakers:
+      serviceCB:
+        maxRequests: 1
+        interval: 30s
+        timeout: 60s
+        trip: consecutiveFailures > 5
+  targets:
+    components:
+      statestore:
+        outbound:
+          retry: stateRetry
+      pubsub:
+        outbound:
+          retry: pubsubRetry
+    apps:
+      inventory-service:
+        retry: stateRetry
+        circuitBreaker: serviceCB
+```
+
+### Resilience Rules
+- **ALWAYS** define resiliency policies for state stores and pub/sub components
+- **CONFIGURE** circuit breakers for synchronous service invocation
+- **SET** reasonable `ackWait` and `maxDeliver` on pub/sub subscriptions
+- **IMPLEMENT** dead-letter topic handling — don't let failed messages disappear
+
+---
+
 ## Anti-Patterns
 
 ```
@@ -234,6 +394,8 @@ allSecrets, err := client.GetBulkSecret(ctx, "secretstore", nil)
 ❌ Fire-and-forget pub/sub without dead-letter topic
 ❌ Ignoring etags on state updates — silent overwrites
 ❌ Missing context.Context propagation — breaks tracing and cancellation
+❌ Missing health check for Dapr sidecar — silent failures in orchestrators
+❌ Chaining 4+ synchronous service invocations — use a workflow instead
 ```
 
 ---

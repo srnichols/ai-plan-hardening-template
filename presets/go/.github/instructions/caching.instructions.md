@@ -107,6 +107,41 @@ func (s *ProducerService) Update(ctx context.Context, p *Producer) error {
 }
 ```
 
+## Multi-Tenant Caching
+
+```go
+// ✅ ALWAYS include tenantID in cache keys — never share cache across tenants
+func tenantCacheKey(tenantID, entity, id string) string {
+    return tenantID + ":" + entity + ":" + id
+}
+
+func (s *ProducerService) GetByIDForTenant(ctx context.Context, tenantID, id string) (*Producer, error) {
+    key := tenantCacheKey(tenantID, "producer", id)
+    cached, err := s.redis.Get(ctx, key).Result()
+    if err == nil {
+        var p Producer
+        if err := json.Unmarshal([]byte(cached), &p); err == nil {
+            return &p, nil
+        }
+    }
+
+    producer, err := s.repo.GetByID(ctx, id, tenantID)
+    if err != nil {
+        return nil, fmt.Errorf("get producer %s for tenant %s: %w", id, tenantID, err)
+    }
+    if producer != nil {
+        data, _ := json.Marshal(producer)
+        s.redis.Set(ctx, key, data, 15*time.Minute)
+    }
+    return producer, nil
+}
+
+// ✅ Invalidate within tenant scope only
+func (s *ProducerService) InvalidateTenantCache(ctx context.Context, tenantID, entity, id string) error {
+    return s.redis.Del(ctx, tenantCacheKey(tenantID, entity, id)).Err()
+}
+```
+
 ## Anti-Patterns
 
 ```

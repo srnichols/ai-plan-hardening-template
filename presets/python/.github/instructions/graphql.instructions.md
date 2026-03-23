@@ -186,3 +186,4 @@ schema = strawberry.Schema(
 - `database.instructions.md` — SQLAlchemy, parameterized queries
 - `security.instructions.md` — JWT validation, Pydantic input schemas
 - `performance.instructions.md` — Async concurrency, connection pooling
+- `dapr.instructions.md` — State management, workflow execution

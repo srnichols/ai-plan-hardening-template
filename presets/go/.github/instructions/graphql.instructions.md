@@ -66,6 +66,13 @@ func (r *mutationResolver) CreateProducer(ctx context.Context, input model.Creat
 
 ## DataLoaders (N+1 Prevention)
 
+### Non-Negotiable DataLoader Rules
+- **NEVER** query the database inside a loop or field resolver without a DataLoader
+- **ALWAYS** create DataLoaders per-request via middleware — never share across requests
+- **ALWAYS** batch query with `WHERE id IN (?)` — never loop through keys
+- **ALWAYS** return results in the same order as the input keys
+- **ALWAYS** include `tenantID` in batch queries for multi-tenant isolation
+
 ```go
 // ✅ Use dataloaden or manual DataLoader pattern
 // graph/dataloader.go
@@ -120,6 +127,7 @@ func (r *orderResolver) Producer(ctx context.Context, obj *model.Order) (*model.
 
 ## Authentication & Multi-Tenancy
 
+### Auth Middleware (JWT → Context)
 ```go
 // ✅ Auth middleware — extract JWT, inject into context
 func AuthMiddleware(next http.Handler) http.Handler {
@@ -132,6 +140,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
         }
         ctx := context.WithValue(r.Context(), tenantIDKey, claims.TenantID)
         ctx = context.WithValue(ctx, userIDKey, claims.Sub)
+        ctx = context.WithValue(ctx, rolesKey, claims.Roles)
         next.ServeHTTP(w, r.WithContext(ctx))
     })
 }
@@ -139,6 +148,24 @@ func AuthMiddleware(next http.Handler) http.Handler {
 // ✅ Helper — extract tenantID in resolvers
 func TenantIDFromContext(ctx context.Context) string {
     return ctx.Value(tenantIDKey).(string)
+}
+```
+
+### Multi-Tenant Resolver Pattern
+```go
+// ✅ EVERY resolver that touches data MUST include tenantID in the query
+func (r *queryResolver) Producers(ctx context.Context, page *int, pageSize *int) (*model.ProducerPage, error) {
+    tenantID := auth.TenantIDFromContext(ctx)
+    // ❌ NEVER: r.ProducerRepo.GetAll(ctx)
+    // ✅ ALWAYS: scope to tenant
+    return r.ProducerRepo.GetByTenant(ctx, tenantID, pageOrDefault(page), pageSizeOrDefault(pageSize))
+}
+
+// ✅ DataLoader batch queries MUST also filter by tenant
+func batchProducers(ctx context.Context, keys []string) []*dataloader.Result[*model.Producer] {
+    tenantID := auth.TenantIDFromContext(ctx)
+    producers, err := repo.GetByIDsAndTenant(ctx, keys, tenantID) // ✅ Tenant-scoped
+    // ... map results
 }
 ```
 
@@ -222,3 +249,4 @@ max_depth: 10
 - `database.instructions.md` — Repository patterns, parameterized queries
 - `security.instructions.md` — JWT middleware, role-based access
 - `performance.instructions.md` — sync.Pool, concurrency patterns
+- `dapr.instructions.md` — State management, workflow execution
