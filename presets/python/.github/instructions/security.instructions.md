@@ -124,6 +124,7 @@ app.add_middleware(
 
 ## See Also
 
+- `graphql.instructions.md` — GraphQL authorization, permission classes
 - `database.instructions.md` — SQL injection prevention, parameterized queries
 - `api-patterns.instructions.md` — Auth middleware, request validation
 - `deploy.instructions.md` — Secrets management, TLS configuration

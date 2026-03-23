@@ -116,6 +116,7 @@ app.use(express.json({ limit: '1mb' }));
 
 ## See Also
 
+- `graphql.instructions.md` — DataLoader N+1 prevention, query depth limits
 - `database.instructions.md` — Query optimization, connection tuning
 - `caching.instructions.md` — Cache strategies, frozen lookups
 - `observability.instructions.md` — Profiling, metrics collection

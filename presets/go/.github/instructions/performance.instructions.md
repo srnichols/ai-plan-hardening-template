@@ -137,6 +137,7 @@ func newUser(name string) User { return User{Name: name} }
 
 ## See Also
 
+- `graphql.instructions.md` — DataLoader N+1 prevention, complexity limits
 - `database.instructions.md` — Query optimization, connection tuning
 - `caching.instructions.md` — Cache strategies, sync.Pool patterns
 - `observability.instructions.md` — Profiling, metrics collection

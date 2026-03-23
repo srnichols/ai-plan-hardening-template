@@ -173,6 +173,7 @@ function paginate<T>(items: T[], total: number, page: number, pageSize: number):
 
 ## See Also
 
+- `graphql.instructions.md` — Apollo Server schema, resolvers, DataLoaders (for GraphQL APIs)
 - `security.instructions.md` — Auth middleware, input validation, CORS
 - `errorhandling.instructions.md` — Error response format, Express middleware
 - `performance.instructions.md` — Hot-path optimization, async patterns

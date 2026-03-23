@@ -125,6 +125,7 @@ foreach (ref readonly var item in span)
 
 ## See Also
 
+- `graphql.instructions.md` — DataLoader N+1 prevention, query complexity limits
 - `database.instructions.md` — Query optimization, connection tuning
 - `caching.instructions.md` — Cache strategies, frozen lookups
 - `observability.instructions.md` — Profiling, metrics collection

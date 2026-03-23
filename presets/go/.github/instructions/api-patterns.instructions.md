@@ -175,6 +175,7 @@ func NewPagedResult[T any](items []T, page, pageSize, totalCount int) PagedResul
 
 ## See Also
 
+- `graphql.instructions.md` — gqlgen schema, resolvers, DataLoaders (for GraphQL APIs)
 - `security.instructions.md` — JWT middleware, input validation
 - `errorhandling.instructions.md` — Error response format, ProblemDetail
 - `performance.instructions.md` — Hot-path optimization, concurrency patterns

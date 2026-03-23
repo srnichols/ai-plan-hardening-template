@@ -147,6 +147,7 @@ class PagedResult(BaseModel, Generic[T]):
 
 ## See Also
 
+- `graphql.instructions.md` — Strawberry schema, resolvers, DataLoaders (for GraphQL APIs)
 - `security.instructions.md` — Auth middleware, input validation, CORS
 - `errorhandling.instructions.md` — Error response format, exception handlers
 - `performance.instructions.md` — Hot-path optimization, async patterns

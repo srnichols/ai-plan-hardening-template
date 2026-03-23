@@ -121,6 +121,7 @@ List<UserSummary> findSummariesByTenant(@Param("tenantId") String tenantId);
 
 ## See Also
 
+- `graphql.instructions.md` — @BatchMapping N+1 prevention, query complexity
 - `database.instructions.md` — Query optimization, connection tuning
 - `caching.instructions.md` — Cache strategies, @Cacheable patterns
 - `observability.instructions.md` — Profiling, metrics collection

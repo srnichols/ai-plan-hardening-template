@@ -147,6 +147,7 @@ public class ProducersController : ControllerBase { }
 
 ## See Also
 
+- `graphql.instructions.md` — GraphQL schema, resolvers, DataLoaders (for GraphQL APIs)
 - `security.instructions.md` — Auth middleware, input validation, CORS
 - `errorhandling.instructions.md` — Error response format, ProblemDetails
 - `performance.instructions.md` — Hot-path optimization, async patterns

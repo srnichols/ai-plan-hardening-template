@@ -1,0 +1,224 @@
+---
+description: GraphQL patterns for Go — gqlgen, code-first resolvers, DataLoaders, auth middleware
+applyTo: '**/*resolver*,**/*schema*,**/*model*,**/*dataloader*,**/graph/**,**/*.graphqls'
+---
+
+# Go GraphQL Patterns (gqlgen)
+
+## Schema Design (Schema-First + Generated Resolvers)
+
+### GraphQL SDL
+```graphql
+# graph/schema.graphqls
+type Query {
+    producer(id: ID!): Producer
+    producers(page: Int = 1, pageSize: Int = 25): ProducerPage!
+}
+
+type Mutation {
+    createProducer(input: CreateProducerInput!): CreateProducerPayload!
+}
+
+type Producer {
+    id: ID!
+    name: String!
+    contactEmail: String!
+}
+
+input CreateProducerInput {
+    name: String!
+    contactEmail: String!
+}
+
+type CreateProducerPayload {
+    producer: Producer
+    success: Boolean!
+    message: String
+}
+```
+
+### Generated Resolver Implementation
+```go
+// graph/resolver.go — dependency injection root
+type Resolver struct {
+    ProducerRepo ProducerRepository
+    ProducerSvc  ProducerService
+}
+
+// graph/schema.resolvers.go — generated, you fill in bodies
+func (r *queryResolver) Producer(ctx context.Context, id string) (*model.Producer, error) {
+    tenantID := auth.TenantIDFromContext(ctx)
+    return r.ProducerRepo.GetByID(ctx, id, tenantID)
+}
+
+func (r *mutationResolver) CreateProducer(ctx context.Context, input model.CreateProducerInput) (*model.CreateProducerPayload, error) {
+    tenantID := auth.TenantIDFromContext(ctx)
+    if err := validateCreateProducer(input); err != nil {
+        return &model.CreateProducerPayload{Success: false, Message: ptr(err.Error())}, nil
+    }
+    producer, err := r.ProducerSvc.Create(ctx, input, tenantID)
+    if err != nil {
+        return nil, err
+    }
+    return &model.CreateProducerPayload{Producer: producer, Success: true, Message: ptr("Created")}, nil
+}
+```
+
+## DataLoaders (N+1 Prevention)
+
+```go
+// ✅ Use dataloaden or manual DataLoader pattern
+// graph/dataloader.go
+type Loaders struct {
+    ProducerByID *dataloader.Loader[string, *model.Producer]
+}
+
+func NewLoaders(repo ProducerRepository) *Loaders {
+    return &Loaders{
+        ProducerByID: dataloader.NewBatchedLoader(
+            func(ctx context.Context, keys []string) []*dataloader.Result[*model.Producer] {
+                // ✅ Single batch query
+                producers, err := repo.GetByIDs(ctx, keys)
+                if err != nil {
+                    // Return error for all keys
+                    results := make([]*dataloader.Result[*model.Producer], len(keys))
+                    for i := range results {
+                        results[i] = &dataloader.Result[*model.Producer]{Error: err}
+                    }
+                    return results
+                }
+                // Map results back in key order
+                byID := make(map[string]*model.Producer, len(producers))
+                for _, p := range producers {
+                    byID[p.ID] = p
+                }
+                results := make([]*dataloader.Result[*model.Producer], len(keys))
+                for i, key := range keys {
+                    results[i] = &dataloader.Result[*model.Producer]{Data: byID[key]}
+                }
+                return results
+            },
+        ),
+    }
+}
+
+// ✅ Inject via middleware — new loaders per request
+func DataLoaderMiddleware(repo ProducerRepository) func(http.Handler) http.Handler {
+    return func(next http.Handler) http.Handler {
+        return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+            ctx := context.WithValue(r.Context(), loadersKey, NewLoaders(repo))
+            next.ServeHTTP(w, r.WithContext(ctx))
+        })
+    }
+}
+
+// ✅ Usage in field resolver
+func (r *orderResolver) Producer(ctx context.Context, obj *model.Order) (*model.Producer, error) {
+    return Loaders(ctx).ProducerByID.Load(ctx, obj.ProducerID)()
+}
+```
+
+## Authentication & Multi-Tenancy
+
+```go
+// ✅ Auth middleware — extract JWT, inject into context
+func AuthMiddleware(next http.Handler) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        token := r.Header.Get("Authorization")
+        claims, err := validateJWT(strings.TrimPrefix(token, "Bearer "))
+        if err != nil {
+            http.Error(w, "unauthorized", http.StatusUnauthorized)
+            return
+        }
+        ctx := context.WithValue(r.Context(), tenantIDKey, claims.TenantID)
+        ctx = context.WithValue(ctx, userIDKey, claims.Sub)
+        next.ServeHTTP(w, r.WithContext(ctx))
+    })
+}
+
+// ✅ Helper — extract tenantID in resolvers
+func TenantIDFromContext(ctx context.Context) string {
+    return ctx.Value(tenantIDKey).(string)
+}
+```
+
+### Directive-Based Authorization
+```graphql
+directive @hasRole(role: String!) on FIELD_DEFINITION
+
+type Mutation {
+    createProducer(input: CreateProducerInput!): CreateProducerPayload! @hasRole(role: "admin")
+}
+```
+
+```go
+// Directive implementation
+func HasRole(ctx context.Context, obj interface{}, next graphql.Resolver, role string) (interface{}, error) {
+    claims := auth.ClaimsFromContext(ctx)
+    if !claims.HasRole(role) {
+        return nil, fmt.Errorf("access denied: requires role %s", role)
+    }
+    return next(ctx)
+}
+```
+
+## Input Validation
+
+```go
+func validateCreateProducer(input model.CreateProducerInput) error {
+    if strings.TrimSpace(input.Name) == "" {
+        return errors.New("name is required")
+    }
+    if len(input.Name) > 200 {
+        return errors.New("name must be at most 200 characters")
+    }
+    if !isValidEmail(input.ContactEmail) {
+        return errors.New("invalid email format")
+    }
+    return nil
+}
+```
+
+## Error Handling
+
+```go
+// ✅ Error presenter — sanitize errors for production
+srv := handler.NewDefaultServer(schema)
+srv.SetErrorPresenter(func(ctx context.Context, err error) *gqlerror.Error {
+    gqlErr := graphql.DefaultErrorPresenter(ctx, err)
+    // ❌ NEVER leak internal errors
+    if !errors.As(err, new(*AppError)) {
+        gqlErr.Message = "internal error"
+    }
+    return gqlErr
+})
+```
+
+## Complexity & Depth Limiting
+
+```go
+srv := handler.NewDefaultServer(schema)
+srv.Use(extension.FixedComplexityLimit(1000))
+
+// gqlgen.yml
+# max query depth
+max_depth: 10
+```
+
+## Anti-Patterns
+
+```
+❌ Business logic in resolver functions (delegate to services)
+❌ DataLoaders shared across requests (create per-request via middleware)
+❌ Missing tenantID filtering in DataLoader batch queries
+❌ Returning database structs directly (use generated model types)
+❌ No complexity or depth limits (DoS via nested queries)
+❌ Leaking internal error messages to clients
+```
+
+## See Also
+
+- `api-patterns.instructions.md` — REST patterns (for hybrid REST+GraphQL)
+- `database.instructions.md` — Repository patterns, parameterized queries
+- `security.instructions.md` — JWT middleware, role-based access
+- `performance.instructions.md` — sync.Pool, concurrency patterns

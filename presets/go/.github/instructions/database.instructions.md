@@ -103,6 +103,7 @@ migrate -path migrations -database "$DATABASE_URL" down 1
 
 ## See Also
 
+- `graphql.instructions.md` — DataLoader batch queries, N+1 prevention
 - `security.instructions.md` — SQL injection prevention, parameterized queries
 - `caching.instructions.md` — Query result caching, invalidation strategies
 - `performance.instructions.md` — Query optimization, connection pooling

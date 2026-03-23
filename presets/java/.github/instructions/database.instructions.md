@@ -111,6 +111,7 @@ CREATE INDEX idx_users_tenant ON users(tenant_id);
 
 ## See Also
 
+- `graphql.instructions.md` — @BatchMapping, DataLoader batch queries
 - `security.instructions.md` — SQL injection prevention, parameterized queries
 - `caching.instructions.md` — Query result caching, invalidation strategies
 - `performance.instructions.md` — Query optimization, connection pooling

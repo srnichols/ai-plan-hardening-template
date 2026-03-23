@@ -142,6 +142,7 @@ public class CorsConfig {
 
 ## See Also
 
+- `graphql.instructions.md` — GraphQL authorization, @PreAuthorize on resolvers
 - `database.instructions.md` — SQL injection prevention, parameterized queries
 - `api-patterns.instructions.md` — Auth middleware, request validation
 - `deploy.instructions.md` — Secrets management, TLS configuration
