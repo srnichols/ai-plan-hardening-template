@@ -156,11 +156,28 @@ const worker = new Worker('order-processing', async (job: Job) => {
 
 Alternatives: database table with `UNIQUE(event_id)`, or BullMQ's built-in `jobId` deduplication.
 
+## Graceful Shutdown
+```typescript
+// BullMQ — close workers before process exit
+async function shutdown(): Promise<void> {
+  console.log('Shutting down workers...');
+  await worker.close();    // Finish in-flight jobs, stop taking new ones
+  await orderQueue.close();
+  await redis.quit();
+  process.exit(0);
+}
+
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);
+```
+
+- **ALWAYS** call `worker.close()` to finish in-flight jobs before exiting
+- **NEVER** call `process.exit()` without closing workers (jobs marked as stalled)
+- BullMQ stalled job detection will re-process jobs that weren't properly acked
+
 ## See Also
 
 - `dapr.instructions.md` — Dapr building blocks, sidecar config, state, workflows, secrets
 - `observability.instructions.md` — Distributed tracing, event logging
 - `errorhandling.instructions.md` — Dead letter queues, retry logic
 - `database.instructions.md` — Idempotency stores, transactional outbox
-❌ Large payloads in jobs (pass IDs, fetch data in consumer)
-```

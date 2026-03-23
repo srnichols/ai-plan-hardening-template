@@ -245,6 +245,38 @@ r.Route("/api/v1", func(r chi.Router) {
 ❌ Missing Content-Type header on responses
 ```
 
+## API Documentation (OpenAPI)
+
+### swaggo/swag (Annotation-Based)
+```bash
+go install github.com/swaggo/swag/cmd/swag@latest
+swag init -g cmd/server/main.go  # Generates docs/swagger.json
+```
+
+```go
+// @Summary Get producer by ID
+// @Tags producers
+// @Param id path string true "Producer ID"
+// @Success 200 {object} ProducerResponse
+// @Failure 404 {object} ProblemDetail
+// @Router /api/producers/{id} [get]
+func (h *ProducerHandler) GetByID(w http.ResponseWriter, r *http.Request) {
+    // ...
+}
+```
+
+### Serve Swagger UI
+```go
+import httpSwagger "github.com/swaggo/http-swagger"
+
+r.Get("/swagger/*", httpSwagger.WrapHandler)
+```
+
+- **ALWAYS** annotate all handlers with swaggo comments
+- **ALWAYS** document error responses with `@Failure`
+- Run `swag init` in CI to validate spec stays in sync with code
+- Consider `ogen` or `oapi-codegen` for spec-first (generate handlers from OpenAPI spec)
+
 ## See Also
 
 - `version.instructions.md` — Semantic versioning, pre-release, deprecation timelines

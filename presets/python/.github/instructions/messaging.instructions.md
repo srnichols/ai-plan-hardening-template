@@ -160,10 +160,33 @@ def process_order(self, order_id: str, tenant_id: str) -> None:
 
 Alternatives: database table with `UNIQUE(task_id)`, or Celery's `task_reject_on_worker_lost=True`.
 
+## Graceful Shutdown
+```python
+# Celery handles SIGTERM gracefully by default:
+# 1. Stops accepting new tasks
+# 2. Finishes in-flight tasks (within --soft-time-limit)
+# 3. Exits cleanly
+
+# Configure soft/hard time limits
+@app.task(bind=True, soft_time_limit=60, time_limit=90)
+def long_running_task(self, data: dict) -> None:
+    try:
+        process(data)
+    except SoftTimeLimitExceeded:
+        logger.warning("Task soft time limit reached — cleaning up")
+        cleanup()
+
+# Start Celery with graceful shutdown:
+# celery -A myapp worker --concurrency=4 --without-heartbeat
+```
+
+- **ALWAYS** set `soft_time_limit` on long-running tasks
+- **ALWAYS** handle `SoftTimeLimitExceeded` for cleanup
+- Kubernetes: set `terminationGracePeriodSeconds` >= task `time_limit`
+
 ## See Also
 
 - `dapr.instructions.md` — Dapr building blocks, sidecar config, state, workflows, secrets
 - `observability.instructions.md` — Distributed tracing, event logging
 - `errorhandling.instructions.md` — Dead letter queues, retry logic
 - `database.instructions.md` — Idempotency stores, transactional outbox
-```

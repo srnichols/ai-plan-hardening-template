@@ -135,6 +135,46 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         return response
 ```
 
+## Correlation IDs
+```python
+import uuid
+from starlette.middleware.base import BaseHTTPMiddleware
+
+class CorrelationIdMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        correlation_id = request.headers.get("x-correlation-id", str(uuid.uuid4()))
+        # Make available to downstream code via contextvars
+        import contextvars
+        ctx_correlation = contextvars.ContextVar("correlation_id")
+        ctx_correlation.set(correlation_id)
+
+        response = await call_next(request)
+        response.headers["x-correlation-id"] = correlation_id
+        return response
+
+app.add_middleware(CorrelationIdMiddleware)
+```
+
+## Audit Logging
+```python
+from pydantic import BaseModel
+from datetime import datetime, timezone
+
+class AuditEntry(BaseModel):
+    user_id: str
+    tenant_id: str
+    action: str       # "created", "updated", "deleted"
+    entity_type: str  # "Order", "User"
+    entity_id: str
+    timestamp: datetime
+    changes: dict | None = None
+
+async def audit_log(entry: AuditEntry) -> None:
+    logger.info("audit", action=entry.action, entity_type=entry.entity_type,
+                entity_id=entry.entity_id, user_id=entry.user_id)
+    await audit_repository.save(entry)
+```
+
 ## Anti-Patterns
 
 ```

@@ -160,6 +160,52 @@ public class OrderPlacedConsumer(IdempotentEventHandler<OrderPlacedEvent> guard)
 
 Idempotency store options: database table with unique constraint on `event_id`, or Redis `SET NX` with TTL.
 
+## Scheduled Jobs
+```csharp
+// PeriodicTimer-based scheduled background task
+public class DailyReportWorker(ILogger<DailyReportWorker> logger) : BackgroundService
+{
+    protected override async Task ExecuteAsync(CancellationToken ct)
+    {
+        using var timer = new PeriodicTimer(TimeSpan.FromHours(24));
+        while (await timer.WaitForNextTickAsync(ct))
+        {
+            try { await GenerateReportAsync(ct); }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                logger.LogError(ex, "Daily report failed");
+            }
+        }
+    }
+}
+
+// For cron-like scheduling, use Hangfire or Quartz.NET
+RecurringJob.AddOrUpdate("daily-report", () => GenerateReport(), Cron.Daily(8));
+```
+
+## Graceful Shutdown
+```csharp
+// BackgroundService automatically receives cancellation via CancellationToken
+// MassTransit drains in-flight consumers on host shutdown
+
+// Manual shutdown hook for custom consumers
+public class EventConsumerService(ILogger<EventConsumerService> logger) : BackgroundService
+{
+    protected override async Task ExecuteAsync(CancellationToken ct)
+    {
+        while (!ct.IsCancellationRequested)
+        {
+            await ProcessNextMessageAsync(ct);
+        }
+        logger.LogInformation("Consumer shutting down — in-flight messages drained");
+    }
+}
+```
+
+- **ALWAYS** pass `CancellationToken` through to message handlers
+- **NEVER** use `Task.Run` without cancellation support in workers
+- MassTransit and Dapr handle graceful shutdown automatically when registered via DI
+
 ## See Also
 
 - `dapr.instructions.md` — Dapr building blocks, sidecar config, state, workflows, secrets

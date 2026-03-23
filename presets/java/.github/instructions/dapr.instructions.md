@@ -188,6 +188,102 @@ Map<String, Map<String, String>> allSecrets = daprClient.getBulkSecret("secretst
 
 ---
 
+## Component Scoping
+
+```yaml
+# dapr/components/statestore.yaml
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: statestore
+spec:
+  type: state.redis
+  version: v1
+  metadata:
+    - name: redisHost
+      value: redis:6379
+    - name: keyPrefix
+      value: name
+  scopes:                        # ALWAYS scope
+    - my-api-service
+    - my-worker-service
+```
+
+### Rules
+- **ALWAYS** define `scopes` on every component — unscoped = accessible to all services
+- **NEVER** inline connection strings or passwords — use `secretKeyRef`
+- **SEPARATE** component directories per environment
+
+---
+
+## Resiliency
+
+```yaml
+# dapr/components/resiliency.yaml
+apiVersion: dapr.io/v1alpha1
+kind: Resiliency
+metadata:
+  name: default
+spec:
+  policies:
+    retries:
+      defaultRetry:
+        policy: exponential
+        maxInterval: 30s
+        maxRetries: 5
+    circuitBreakers:
+      serviceCB:
+        maxRequests: 1
+        timeout: 60s
+        trip: consecutiveFailures > 5
+  targets:
+    apps:
+      inventory-service:
+        retry: defaultRetry
+        circuitBreaker: serviceCB
+    components:
+      statestore:
+        outbound:
+          retry: defaultRetry
+```
+
+---
+
+## Multi-Tenant Isolation Checklist
+
+| Layer | Pattern | Example |
+|-------|---------|---------|
+| **State keys** | `{tenantId}-{entityId}` prefix | `acme-order-123` |
+| **Pub/sub topics** | Tenant in subject hierarchy | `events.order.acme-corp` |
+| **State metadata** | `tenantId` in metadata | Enables audit/query |
+| **Subscriptions** | Wildcard + filter in handler | `events.order.*` |
+| **Secrets** | Component scoping per service | `scopes: [api-service]` |
+| **Workflows** | Tenant in workflow input | `OrderRequest.tenantId()` |
+
+---
+
+## Health Checks
+
+```java
+@Component
+public class DaprHealthIndicator extends AbstractHealthIndicator {
+    @Override
+    protected void doHealthCheck(Health.Builder builder) throws Exception {
+        var endpoint = System.getenv().getOrDefault("DAPR_HTTP_ENDPOINT", "http://localhost:3500");
+        var client = HttpClient.newHttpClient();
+        var request = HttpRequest.newBuilder(URI.create(endpoint + "/v1.0/healthz")).GET().build();
+        var response = client.send(request, HttpResponse.BodyHandlers.discarding());
+        if (response.statusCode() == 200) {
+            builder.up().withDetail("dapr-sidecar", "healthy");
+        } else {
+            builder.down().withDetail("dapr-sidecar", "unhealthy");
+        }
+    }
+}
+```
+
+---
+
 ## Anti-Patterns
 
 ```

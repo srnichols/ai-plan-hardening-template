@@ -155,6 +155,70 @@ func main() {
 }
 ```
 
+## Dead Letter & Retry Strategy
+```go
+// NATS JetStream — configure max delivery attempts
+js.AddStream(&nats.StreamConfig{
+    Name:       "ORDERS",
+    Subjects:   []string{"orders.>"},
+    MaxDeliver: 3, // Max retry attempts
+})
+
+// Failed messages go to a dead letter subject
+sub, _ := js.Subscribe("orders.placed", func(msg *nats.Msg) {
+    if err := process(msg); err != nil {
+        if msg.Header.Get("Nats-Num-Delivered") >= "3" {
+            // Move to dead letter
+            js.Publish("orders.dead-letter", msg.Data)
+            msg.Term()
+            return
+        }
+        msg.NakWithDelay(time.Duration(1<<msg.Header.Get("Nats-Num-Delivered")) * time.Second)
+        return
+    }
+    msg.Ack()
+}, nats.Durable("order-processor"), nats.ManualAck())
+
+// RabbitMQ — declare dead letter exchange on queue
+ch.QueueDeclare("order-processing", true, false, false, false, amqp.Table{
+    "x-dead-letter-exchange":    "events.dlx",
+    "x-dead-letter-routing-key": "order.failed",
+    "x-message-ttl":             int32(30000),
+})
+```
+
+## Scheduled Jobs
+```go
+// Ticker-based scheduled task
+func (w *ReportWorker) RunDaily(ctx context.Context) error {
+    // Calculate next 8 AM
+    next := nextRunAt(8, 0)
+    timer := time.NewTimer(time.Until(next))
+    defer timer.Stop()
+
+    for {
+        select {
+        case <-ctx.Done():
+            return ctx.Err()
+        case <-timer.C:
+            if err := w.generateReport(ctx); err != nil {
+                slog.Error("daily report failed", "error", err)
+            }
+            next = next.Add(24 * time.Hour)
+            timer.Reset(time.Until(next))
+        }
+    }
+}
+
+// For production, consider robfig/cron
+import "github.com/robfig/cron/v3"
+
+c := cron.New()
+c.AddFunc("0 8 * * *", func() { generateDailyReport() })
+c.Start()
+defer c.Stop()
+```
+
 ## Anti-Patterns
 
 ```

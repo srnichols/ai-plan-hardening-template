@@ -188,6 +188,34 @@ app.Use(async (context, next) =>
 ❌ Return full entity from Create (return DTO only)
 ```
 
+## API Documentation (OpenAPI)
+
+```csharp
+// Program.cs — Scalar or Swagger UI (built-in from .NET 9)
+builder.Services.AddOpenApi();
+
+var app = builder.Build();
+app.MapOpenApi();           // Serves /openapi/v1.json
+app.MapScalarApiReference(); // Interactive docs at /scalar/v1
+```
+
+### Enrich with XML Comments & Attributes
+```csharp
+[HttpGet("{id:guid}")]
+[ProducesResponseType<ProducerDto>(StatusCodes.Status200OK)]
+[ProducesResponseType(StatusCodes.Status404NotFound)]
+[EndpointSummary("Get producer by ID")]
+public async Task<ActionResult<ProducerDto>> GetById(Guid id, CancellationToken ct)
+{
+    var producer = await service.GetByIdAsync(id, ct);
+    return producer is null ? NotFound() : Ok(producer);
+}
+```
+
+- **ALWAYS** add `[ProducesResponseType]` on all endpoints
+- **ALWAYS** enable XML documentation comments in `.csproj` (`<GenerateDocumentationFile>true</GenerateDocumentationFile>`)
+- Group endpoints with `[Tags("Producers")]`
+
 ## See Also
 
 - `version.instructions.md` — Semantic versioning, pre-release, deprecation timelines

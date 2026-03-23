@@ -224,6 +224,45 @@ public class DeprecationHeaderFilter extends OncePerRequestFilter {
 ❌ Missing @Valid on @RequestBody (validation silently skipped)
 ```
 
+## API Documentation (OpenAPI)
+
+### SpringDoc OpenAPI (Recommended)
+```xml
+<!-- pom.xml -->
+<dependency>
+    <groupId>org.springdoc</groupId>
+    <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+    <version>2.7.0</version>
+</dependency>
+```
+
+```java
+// Swagger UI at /swagger-ui.html, spec at /v3/api-docs
+@Operation(summary = "Get producer by ID")
+@ApiResponses({
+    @ApiResponse(responseCode = "200", description = "Producer found"),
+    @ApiResponse(responseCode = "404", description = "Producer not found")
+})
+@GetMapping("/{id}")
+public ProducerResponse getById(@PathVariable UUID id) {
+    return service.getById(id);
+}
+```
+
+```yaml
+# application.yml
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true     # Disable in production if needed
+```
+
+- **ALWAYS** annotate endpoints with `@Operation` and `@ApiResponse`
+- **ALWAYS** use typed request/response records (drives schema generation)
+- Group endpoints with `@Tag(name = "Producers")`
+
 ## See Also
 
 - `version.instructions.md` — Semantic versioning, pre-release, deprecation timelines

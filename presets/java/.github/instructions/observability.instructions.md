@@ -154,6 +154,73 @@ public class ExternalApiHealthIndicator extends AbstractHealthIndicator {
 }
 ```
 
+## Correlation IDs
+```java
+@Component
+public class CorrelationIdFilter extends OncePerRequestFilter {
+    @Override
+    protected void doFilterInternal(HttpServletRequest request,
+            HttpServletResponse response, FilterChain chain)
+            throws ServletException, IOException {
+        String correlationId = request.getHeader("X-Correlation-ID");
+        if (correlationId == null) {
+            correlationId = UUID.randomUUID().toString();
+        }
+        MDC.put("correlationId", correlationId);
+        response.setHeader("X-Correlation-ID", correlationId);
+        try {
+            chain.doFilter(request, response);
+        } finally {
+            MDC.remove("correlationId");
+        }
+    }
+}
+```
+
+## Request Logging Middleware
+```java
+@Component
+public class RequestLoggingFilter extends OncePerRequestFilter {
+    private static final Logger log = LoggerFactory.getLogger(RequestLoggingFilter.class);
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request,
+            HttpServletResponse response, FilterChain chain)
+            throws ServletException, IOException {
+        long start = System.currentTimeMillis();
+        chain.doFilter(request, response);
+        log.info("Request completed: {} {} {} {}ms",
+            request.getMethod(), request.getRequestURI(),
+            response.getStatus(), System.currentTimeMillis() - start);
+    }
+}
+```
+
+## Audit Logging
+```java
+public record AuditEntry(
+    String userId,
+    String tenantId,
+    String action,      // "created", "updated", "deleted"
+    String entityType,  // "Order", "User"
+    String entityId,
+    Instant timestamp,
+    Map<String, Object> changes
+) {}
+
+@Service
+public class AuditService {
+    private static final Logger log = LoggerFactory.getLogger(AuditService.class);
+    private final AuditRepository auditRepository;
+
+    public void log(AuditEntry entry) {
+        log.info("Audit: {} {}/{} by {}",
+            entry.action(), entry.entityType(), entry.entityId(), entry.userId());
+        auditRepository.save(entry);
+    }
+}
+```
+
 ## Anti-Patterns
 
 ```

@@ -525,6 +525,123 @@ builder.Services.AddDaprClient(b => b.UseJsonSerializationOptions(
 
 ---
 
+## Service Invocation
+
+```csharp
+// mTLS, retries, and tracing handled by Dapr sidecar
+public class InventoryClient(DaprClient daprClient)
+{
+    public async Task<InventoryResponse?> CheckAsync(string productId, CancellationToken ct = default)
+    {
+        var request = daprClient.CreateInvokeMethodRequest(
+            HttpMethod.Post, "inventory-service", "api/inventory/check",
+            new InventoryRequest(productId));
+        return await daprClient.InvokeMethodAsync<InventoryResponse>(request, ct);
+    }
+}
+```
+
+---
+
+## Secrets
+
+```csharp
+// Single secret
+var secret = await daprClient.GetSecretAsync("secretstore", "db-connection-string", cancellationToken: ct);
+var connStr = secret["db-connection-string"];
+
+// Bulk secrets (startup config)
+var allSecrets = await daprClient.GetBulkSecretAsync("secretstore", cancellationToken: ct);
+```
+
+---
+
+## Component Scoping
+
+### Rules
+- **ALWAYS** define `scopes` on every component — unscoped components are accessible to all services
+- **NEVER** inline connection strings or passwords — use `secretKeyRef`
+- **ALWAYS** version component files in source control
+- **SEPARATE** component directories per environment: `dapr/components/dev/`, `dapr/components/prod/`
+
+---
+
+## Resiliency
+
+```yaml
+# dapr/components/resiliency.yaml
+apiVersion: dapr.io/v1alpha1
+kind: Resiliency
+metadata:
+  name: default
+spec:
+  policies:
+    retries:
+      defaultRetry:
+        policy: exponential
+        maxInterval: 30s
+        maxRetries: 5
+    circuitBreakers:
+      serviceCB:
+        maxRequests: 1
+        timeout: 60s
+        trip: consecutiveFailures > 5
+  targets:
+    apps:
+      inventory-service:
+        retry: defaultRetry
+        circuitBreaker: serviceCB
+    components:
+      statestore:
+        outbound:
+          retry: defaultRetry
+```
+
+---
+
+## Multi-Tenant Isolation Checklist
+
+| Layer | Pattern | Example |
+|-------|---------|---------|
+| **State keys** | `{tenantId}-{entityId}` prefix | `acme-order-123` |
+| **Pub/sub topics** | Tenant in subject hierarchy | `events.order.acme-corp` |
+| **State metadata** | `tenantId` in metadata | Enables audit/query |
+| **Subscriptions** | Wildcard + filter in handler | `events.order.*` |
+| **Secrets** | Component scoping per service | `scopes: [api-service]` |
+| **Workflows** | Tenant in workflow input | `OrderRequest.TenantId` |
+
+---
+
+## Health Checks
+
+```csharp
+// Custom health check for Dapr sidecar
+public class DaprHealthCheck(IHttpClientFactory httpClientFactory) : IHealthCheck
+{
+    public async Task<HealthCheckResult> CheckHealthAsync(
+        HealthCheckContext context, CancellationToken ct = default)
+    {
+        var client = httpClientFactory.CreateClient();
+        var endpoint = Environment.GetEnvironmentVariable("DAPR_HTTP_ENDPOINT") ?? "http://localhost:3500";
+        try
+        {
+            var response = await client.GetAsync($"{endpoint}/v1.0/healthz", ct);
+            return response.IsSuccessStatusCode
+                ? HealthCheckResult.Healthy("Dapr sidecar is healthy")
+                : HealthCheckResult.Unhealthy("Dapr sidecar not ready");
+        }
+        catch (Exception ex)
+        {
+            return HealthCheckResult.Unhealthy("Dapr sidecar unreachable", ex);
+        }
+    }
+}
+
+// Register: builder.Services.AddHealthChecks().AddCheck<DaprHealthCheck>("dapr");
+```
+
+---
+
 ## Anti-Patterns
 
 ```

@@ -230,6 +230,40 @@ spec:
 
 ---
 
+## Multi-Tenant Isolation Checklist
+
+| Layer | Pattern | Example |
+|-------|---------|---------|
+| **State keys** | `{tenantId}-{entityId}` prefix | `acme-order-123` |
+| **Pub/sub topics** | Tenant in subject hierarchy | `events.order.acme-corp` |
+| **State metadata** | `tenantId` in metadata | Enables audit/query |
+| **Subscriptions** | Wildcard + filter in handler | `events.order.*` |
+| **Secrets** | Component scoping per service | `scopes: [api-service]` |
+| **Workflows** | Tenant in workflow input | `OrderRequest.tenantId` |
+
+---
+
+## Health Checks
+
+```typescript
+// Check Dapr sidecar health for readiness probes
+app.get('/health/dapr', async (_req, res) => {
+  try {
+    const daprEndpoint = process.env.DAPR_HTTP_ENDPOINT ?? 'http://localhost:3500';
+    const response = await fetch(`${daprEndpoint}/v1.0/healthz`);
+    if (response.ok) {
+      res.json({ status: 'healthy', component: 'dapr-sidecar' });
+    } else {
+      res.status(503).json({ status: 'unhealthy', component: 'dapr-sidecar' });
+    }
+  } catch {
+    res.status(503).json({ status: 'unreachable', component: 'dapr-sidecar' });
+  }
+});
+```
+
+---
+
 ## Anti-Patterns
 
 ```

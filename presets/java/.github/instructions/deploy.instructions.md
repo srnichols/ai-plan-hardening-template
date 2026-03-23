@@ -168,6 +168,69 @@ services:
 - **NEVER** edit a Flyway migration that has already been applied
 - **ALWAYS** have a rollback plan — see `database.instructions.md` for rollback procedures
 
+## Graceful Shutdown
+
+```java
+// Spring Boot handles SIGTERM gracefully by default
+// application.yml
+server:
+  shutdown: graceful
+
+spring:
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+```
+
+```java
+@Component
+public class CleanupService {
+
+    @PreDestroy
+    public void onShutdown() {
+        log.info("Shutting down — flushing buffers and closing connections...");
+        // Flush async logs, close external clients, drain message listeners
+    }
+}
+```
+
+- **ALWAYS** set `server.shutdown=graceful` in production
+- **ALWAYS** use `@PreDestroy` for cleanup logic (not shutdown hooks)
+- Kubernetes sends SIGTERM → waits `terminationGracePeriodSeconds` → SIGKILL
+
+## Blue-Green / Canary Deployments
+
+### Kubernetes Rolling Update (Default)
+```yaml
+spec:
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0   # Zero-downtime
+```
+
+### Canary with Traffic Splitting
+```yaml
+# Use a service mesh (Istio/Linkerd) or ingress controller for weighted routing
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+spec:
+  http:
+    - route:
+        - destination:
+            host: api
+            subset: stable
+          weight: 90
+        - destination:
+            host: api
+            subset: canary
+          weight: 10
+```
+
+- **ALWAYS** ensure database migrations are backward-compatible for blue-green
+- **ALWAYS** use health checks as deployment gates
+- Roll back immediately if error rate exceeds threshold
+
 ---
 
 ## See Also

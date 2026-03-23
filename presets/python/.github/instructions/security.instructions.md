@@ -111,6 +111,70 @@ app.add_middleware(
 )
 ```
 
+## Rate Limiting
+
+```python
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# Global rate limit
+@app.middleware("http")
+async def rate_limit_middleware(request, call_next):
+    return await call_next(request)
+
+# Per-endpoint rate limit
+@router.get("/search")
+@limiter.limit("100/minute")
+async def search(request: Request):
+    ...
+
+# Per-tenant rate limit
+def tenant_key_func(request: Request) -> str:
+    return getattr(request.state, "tenant_id", get_remote_address(request))
+
+tenant_limiter = Limiter(key_func=tenant_key_func)
+```
+
+## Security Headers
+
+```python
+from starlette.middleware.base import BaseHTTPMiddleware
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "0"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'"
+        )
+        response.headers["Strict-Transport-Security"] = (
+            "max-age=31536000; includeSubDomains"
+        )
+        return response
+
+app.add_middleware(SecurityHeadersMiddleware)
+```
+
+## Common Vulnerabilities to Prevent
+
+| Vulnerability | Prevention |
+|--------------|------------|
+| SQL Injection | Parameterized queries, SQLAlchemy ORM |
+| XSS | Output encoding, CSP headers |
+| SSRF | Validate/allowlist outbound URLs |
+| Path Traversal | `pathlib.resolve()` + validate against base dir |
+| Insecure Deserialization | Never use `pickle` with untrusted data, use Pydantic |
+| Command Injection | Never use `os.system()` or `subprocess.run(shell=True)` with user input |
+| Mass Assignment | Pydantic models with explicit fields, never `**kwargs` from request |
+
 ## OWASP Top 10 (2021) Alignment
 
 | OWASP Category | How This File Addresses It |

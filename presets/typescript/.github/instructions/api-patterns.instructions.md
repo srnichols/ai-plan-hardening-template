@@ -233,6 +233,49 @@ app.use(deprecationHeaders);
 ❌ Return full database entities (return DTOs, strip internal fields)
 ```
 
+## API Documentation (OpenAPI)
+
+### Express + swagger-jsdoc
+```typescript
+import swaggerJsdoc from 'swagger-jsdoc';
+import swaggerUi from 'swagger-ui-express';
+
+const spec = swaggerJsdoc({
+  definition: {
+    openapi: '3.0.0',
+    info: { title: 'MyApp API', version: '1.0.0' },
+    servers: [{ url: '/api' }],
+  },
+  apis: ['./src/routes/*.ts'],
+});
+
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(spec));
+```
+
+### JSDoc Annotations
+```typescript
+/**
+ * @openapi
+ * /api/producers/{id}:
+ *   get:
+ *     summary: Get producer by ID
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *     responses:
+ *       200:
+ *         description: Producer found
+ *       404:
+ *         description: Producer not found
+ */
+```
+
+- **ALWAYS** annotate all endpoints with `@openapi` JSDoc
+- **ALWAYS** document error responses (400, 404, 500)
+- Consider `tsoa` or `zod-to-openapi` for type-safe spec generation from schemas
+
 ## See Also
 
 - `version.instructions.md` — Semantic versioning, pre-release, deprecation timelines

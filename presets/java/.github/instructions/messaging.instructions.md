@@ -189,6 +189,37 @@ public void handleOrderPlaced(OrderPlacedEvent event, Message message) {
 
 Alternatives: Redis `SETNX` with TTL, or Spring Integration's `IdempotentReceiverInterceptor`.
 
+## Graceful Shutdown
+```java
+// Spring Boot handles listener container shutdown automatically with:
+// application.yml
+server:
+  shutdown: graceful
+
+spring:
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+
+// RabbitMQ listeners finish in-flight messages before shutdown
+// Kafka listeners commit offsets and close consumers
+```
+
+```java
+@Component
+public class MessagingCleanup {
+
+    @PreDestroy
+    public void onShutdown() {
+        log.info("Messaging shutdown — draining in-flight messages...");
+        // Custom cleanup for non-Spring-managed consumers
+    }
+}
+```
+
+- **ALWAYS** set `server.shutdown=graceful` in production
+- **ALWAYS** use Spring-managed listener containers (auto-shutdown on SIGTERM)
+- For Kafka: set `spring.kafka.listener.ack-mode=manual` to control offset commits
+
 ## See Also
 
 - `dapr.instructions.md` — Dapr building blocks, sidecar config, state, workflows, secrets

@@ -382,6 +382,39 @@ spec:
 
 ---
 
+## Resiliency
+
+```yaml
+# dapr/components/resiliency.yaml
+apiVersion: dapr.io/v1alpha1
+kind: Resiliency
+metadata:
+  name: default
+spec:
+  policies:
+    retries:
+      defaultRetry:
+        policy: exponential
+        maxInterval: 30s
+        maxRetries: 5
+    circuitBreakers:
+      serviceCB:
+        maxRequests: 1
+        timeout: 60s
+        trip: consecutiveFailures > 5
+  targets:
+    apps:
+      inventory-service:
+        retry: defaultRetry
+        circuitBreaker: serviceCB
+    components:
+      statestore:
+        outbound:
+          retry: defaultRetry
+```
+
+---
+
 ## Anti-Patterns
 
 ```

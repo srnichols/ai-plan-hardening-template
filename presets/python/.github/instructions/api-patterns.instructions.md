@@ -218,6 +218,39 @@ app.add_middleware(DeprecationMiddleware)
 ❌ Bare except without logging (always log, then re-raise or handle)
 ```
 
+## API Documentation (OpenAPI)
+
+FastAPI generates OpenAPI 3.1 automatically from route definitions and Pydantic models.
+
+```python
+from fastapi import FastAPI
+
+app = FastAPI(
+    title="MyApp API",
+    version="1.0.0",
+    docs_url="/docs",       # Swagger UI
+    redoc_url="/redoc",     # ReDoc
+    openapi_url="/openapi.json",
+)
+
+# Enrich endpoints with response models and descriptions
+@router.get(
+    "/{producer_id}",
+    response_model=ProducerResponse,
+    responses={
+        404: {"description": "Producer not found"},
+    },
+    summary="Get producer by ID",
+)
+async def get_producer(producer_id: UUID) -> ProducerResponse:
+    ...
+```
+
+- **ALWAYS** set `response_model` on all endpoints (drives schema generation)
+- **ALWAYS** document error responses in `responses={}` dict
+- Use `tags=["producers"]` on routers to group endpoints
+- Disable `/docs` in production: `docs_url=None if settings.ENVIRONMENT == "production" else "/docs"`
+
 ## See Also
 
 - `version.instructions.md` — Semantic versioning, pre-release, deprecation timelines

@@ -105,6 +105,60 @@ dotnet ef database update --project src/MyApp.Data
 - **ALWAYS** have a rollback plan — see `database.instructions.md` for rollback procedures
 - **ALWAYS** backup before applying migrations to production
 
+## Graceful Shutdown
+
+```csharp
+// Program.cs — ASP.NET handles SIGTERM via IHostApplicationLifetime
+var app = builder.Build();
+
+app.Lifetime.ApplicationStopping.Register(() =>
+{
+    Log.Information("Shutting down — draining in-flight requests...");
+    // Flush telemetry, close connections, complete background tasks
+});
+
+// Configure shutdown timeout (default 30s)
+builder.Services.Configure<HostOptions>(opts => opts.ShutdownTimeout = TimeSpan.FromSeconds(30));
+```
+
+- **ALWAYS** handle `ApplicationStopping` to flush logs, close DB connections, and drain queues
+- **NEVER** use `Environment.Exit()` — let the host manage shutdown
+- Kubernetes sends SIGTERM → waits `terminationGracePeriodSeconds` → SIGKILL
+
+## Blue-Green / Canary Deployments
+
+### Kubernetes Rolling Update (Default)
+```yaml
+spec:
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0   # Zero-downtime
+```
+
+### Canary with Traffic Splitting
+```yaml
+# Use a service mesh (Istio/Linkerd) or ingress controller for weighted routing
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+spec:
+  http:
+    - route:
+        - destination:
+            host: api
+            subset: stable
+          weight: 90
+        - destination:
+            host: api
+            subset: canary
+          weight: 10
+```
+
+- **ALWAYS** ensure database migrations are backward-compatible for blue-green
+- **ALWAYS** use health checks as deployment gates
+- Roll back immediately if error rate exceeds threshold
+
 ---
 
 ## See Also

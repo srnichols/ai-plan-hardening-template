@@ -109,6 +109,48 @@ app.Use(async (context, next) =>
 });
 ```
 
+## Request Logging Middleware
+```csharp
+app.Use(async (context, next) =>
+{
+    var correlationId = context.Request.Headers["X-Correlation-ID"].FirstOrDefault()
+        ?? Guid.NewGuid().ToString();
+    context.Response.Headers["X-Correlation-ID"] = correlationId;
+
+    var sw = Stopwatch.StartNew();
+    using (logger.BeginScope(new Dictionary<string, object> { ["CorrelationId"] = correlationId }))
+    {
+        await next();
+        logger.LogInformation("Request completed: {Method} {Path} {StatusCode} {Duration}ms",
+            context.Request.Method, context.Request.Path,
+            context.Response.StatusCode, sw.ElapsedMilliseconds);
+    }
+});
+```
+
+## Audit Logging
+```csharp
+// Log who changed what for compliance
+public record AuditEntry(
+    string UserId,
+    string TenantId,
+    string Action,       // "created", "updated", "deleted"
+    string EntityType,   // "Order", "User"
+    string EntityId,
+    DateTimeOffset Timestamp,
+    JsonDocument? Changes = null);
+
+public class AuditService(ILogger<AuditService> logger, IAuditRepository repo)
+{
+    public async Task LogAsync(AuditEntry entry, CancellationToken ct = default)
+    {
+        logger.LogInformation("Audit: {Action} {EntityType}/{EntityId} by {UserId}",
+            entry.Action, entry.EntityType, entry.EntityId, entry.UserId);
+        await repo.SaveAsync(entry, ct);
+    }
+}
+```
+
 ## Anti-Patterns
 
 ```

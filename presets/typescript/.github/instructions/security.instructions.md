@@ -104,6 +104,64 @@ app.use(cors({
 }));
 ```
 
+## Rate Limiting
+
+```typescript
+import rateLimit from 'express-rate-limit';
+
+// Global rate limiter
+const globalLimiter = rateLimit({
+  windowMs: 60 * 1000,  // 1 minute
+  max: 1000,            // per IP
+  standardHeaders: true, // RateLimit-* headers
+  legacyHeaders: false,
+  message: { title: 'Too Many Requests', status: 429 },
+});
+app.use(globalLimiter);
+
+// Tenant-scoped rate limiter
+const tenantLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 100,
+  keyGenerator: (req) => req.tenantId ?? req.ip,
+});
+app.use('/api/', tenantLimiter);
+```
+
+## Security Headers
+
+```typescript
+import helmet from 'helmet';
+
+// Helmet sets secure headers automatically
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+    },
+  },
+  hsts: { maxAge: 31536000, includeSubDomains: true },
+  frameguard: { action: 'deny' },
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+}));
+// Sets: X-Content-Type-Options, X-Frame-Options, Strict-Transport-Security,
+//       Content-Security-Policy, Referrer-Policy, X-XSS-Protection
+```
+
+## Common Vulnerabilities to Prevent
+
+| Vulnerability | Prevention |
+|--------------|------------|
+| SQL Injection | Parameterized queries, Prisma ORM |
+| XSS | Output encoding, CSP headers, Helmet middleware |
+| CSRF | SameSite cookies, CSRF tokens for forms |
+| Prototype Pollution | Validate input with Zod, avoid `Object.assign` on user input |
+| SSRF | Validate/allowlist outbound URLs |
+| Path Traversal | `path.resolve()` + validate against base dir |
+| ReDoS | Avoid unbounded regex, use Zod for validation |
+
 ## OWASP Top 10 (2021) Alignment
 
 | OWASP Category | How This File Addresses It |

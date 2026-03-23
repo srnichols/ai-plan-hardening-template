@@ -135,6 +135,44 @@ export function requestLogger(req: Request, res: Response, next: NextFunction) {
 }
 ```
 
+## Correlation IDs
+```typescript
+import { randomUUID } from 'node:crypto';
+
+// Middleware to propagate correlation ID
+export function correlationId(req: Request, res: Response, next: NextFunction) {
+  const id = req.headers['x-correlation-id'] as string ?? randomUUID();
+  res.setHeader('x-correlation-id', id);
+  // Attach to request for downstream use
+  (req as any).correlationId = id;
+  next();
+}
+app.use(correlationId);
+
+// Include in all outbound HTTP calls
+const response = await fetch(url, {
+  headers: { 'X-Correlation-ID': req.correlationId },
+});
+```
+
+## Audit Logging
+```typescript
+interface AuditEntry {
+  userId: string;
+  tenantId: string;
+  action: 'created' | 'updated' | 'deleted';
+  entityType: string;
+  entityId: string;
+  timestamp: string;
+  changes?: Record<string, { old: unknown; new: unknown }>;
+}
+
+async function auditLog(entry: AuditEntry): Promise<void> {
+  logger.info({ ...entry }, `Audit: ${entry.action} ${entry.entityType}/${entry.entityId}`);
+  await auditRepository.save(entry);
+}
+```
+
 ## Anti-Patterns
 
 ```

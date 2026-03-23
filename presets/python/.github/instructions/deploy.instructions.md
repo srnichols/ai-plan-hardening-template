@@ -130,6 +130,63 @@ alembic upgrade head
 - **ALWAYS** have a rollback plan — see `database.instructions.md` for rollback procedures
 - **ALWAYS** backup before applying migrations to production
 
+## Graceful Shutdown
+
+```python
+import signal
+import asyncio
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    yield
+    # Shutdown — clean up resources
+    await db_pool.close()
+    await redis_client.close()
+    logger.info("Graceful shutdown complete")
+
+app = FastAPI(lifespan=lifespan)
+```
+
+- **ALWAYS** use FastAPI `lifespan` (not deprecated `on_event`) for startup/shutdown
+- **ALWAYS** close database pools, Redis connections, and HTTP clients on shutdown
+- Uvicorn handles SIGTERM gracefully — configure `--timeout-graceful-shutdown 30`
+
+## Blue-Green / Canary Deployments
+
+### Kubernetes Rolling Update (Default)
+```yaml
+spec:
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0   # Zero-downtime
+```
+
+### Canary with Traffic Splitting
+```yaml
+# Use a service mesh (Istio/Linkerd) or ingress controller for weighted routing
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+spec:
+  http:
+    - route:
+        - destination:
+            host: api
+            subset: stable
+          weight: 90
+        - destination:
+            host: api
+            subset: canary
+          weight: 10
+```
+
+- **ALWAYS** ensure database migrations are backward-compatible for blue-green
+- **ALWAYS** use health checks as deployment gates
+- Roll back immediately if error rate exceeds threshold
+
 ---
 
 ## See Also

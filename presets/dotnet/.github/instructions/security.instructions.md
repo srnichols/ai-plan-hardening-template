@@ -80,6 +80,71 @@ builder.Services.AddCors(options =>
 });
 ```
 
+## Rate Limiting
+
+```csharp
+// Built-in rate limiter (.NET 7+)
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    // Fixed window per tenant
+    options.AddPolicy("per-tenant", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: context.GetTenantId(),
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 100,
+                Window = TimeSpan.FromMinutes(1),
+            }));
+
+    // Global rate limit
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(
+        context => RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 1000,
+                Window = TimeSpan.FromMinutes(1),
+            }));
+});
+
+app.UseRateLimiter();
+
+// Apply to specific endpoints
+app.MapGet("/api/search", Search).RequireRateLimiting("per-tenant");
+```
+
+## Security Headers
+
+```csharp
+// Middleware to add security headers
+app.Use(async (context, next) =>
+{
+    context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+    context.Response.Headers.Append("X-Frame-Options", "DENY");
+    context.Response.Headers.Append("X-XSS-Protection", "0"); // Modern browsers: use CSP instead
+    context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+    context.Response.Headers.Append("Content-Security-Policy",
+        "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'");
+    context.Response.Headers.Append("Strict-Transport-Security",
+        "max-age=31536000; includeSubDomains"); // HSTS
+    await next();
+});
+```
+
+## Common Vulnerabilities to Prevent
+
+| Vulnerability | Prevention |
+|--------------|------------|
+| SQL Injection | Parameterized queries, EF Core, Dapper `@param` |
+| XSS | Razor auto-encoding, CSP headers |
+| CSRF | `[ValidateAntiForgeryToken]`, SameSite cookies |
+| Mass Assignment | Use DTOs, never bind directly to entities |
+| SSRF | Validate/allowlist outbound URLs |
+| Insecure Deserialization | Use `System.Text.Json` with typed models |
+| Path Traversal | `Path.GetFullPath()` validation, never trust user paths |
+
 ## OWASP Top 10 (2021) Alignment
 
 | OWASP Category | How This File Addresses It |

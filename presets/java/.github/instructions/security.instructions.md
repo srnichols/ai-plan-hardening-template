@@ -122,6 +122,70 @@ public class CorsConfig {
 }
 ```
 
+## Rate Limiting
+
+```java
+// Using Bucket4j with Spring Boot
+@Configuration
+public class RateLimitConfig {
+
+    @Bean
+    public FilterRegistrationBean<RateLimitFilter> rateLimitFilter() {
+        var registration = new FilterRegistrationBean<RateLimitFilter>();
+        registration.setFilter(new RateLimitFilter());
+        registration.addUrlPatterns("/api/*");
+        return registration;
+    }
+}
+
+public class RateLimitFilter extends OncePerRequestFilter {
+    private final Map<String, Bucket> tenantBuckets = new ConcurrentHashMap<>();
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request,
+            HttpServletResponse response, FilterChain chain)
+            throws ServletException, IOException {
+        String key = extractTenantId(request);
+        Bucket bucket = tenantBuckets.computeIfAbsent(key, k ->
+            Bucket.builder()
+                .addLimit(Bandwidth.classic(100, Refill.intervally(100, Duration.ofMinutes(1))))
+                .build());
+
+        if (bucket.tryConsume(1)) {
+            chain.doFilter(request, response);
+        } else {
+            response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
+            response.getWriter().write("{\"title\":\"Too Many Requests\",\"status\":429}");
+        }
+    }
+}
+```
+
+## Security Headers
+
+```java
+@Component
+public class SecurityHeadersFilter extends OncePerRequestFilter {
+    @Override
+    protected void doFilterInternal(HttpServletRequest request,
+            HttpServletResponse response, FilterChain chain)
+            throws ServletException, IOException {
+        response.setHeader("X-Content-Type-Options", "nosniff");
+        response.setHeader("X-Frame-Options", "DENY");
+        response.setHeader("X-XSS-Protection", "0");
+        response.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+        response.setHeader("Content-Security-Policy",
+            "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'");
+        response.setHeader("Strict-Transport-Security",
+            "max-age=31536000; includeSubDomains");
+        chain.doFilter(request, response);
+    }
+}
+
+// Or via Spring Security:
+// http.headers(h -> h.contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self'")));
+```
+
 ## Common Vulnerabilities to Prevent
 
 | Vulnerability | Prevention |

@@ -101,6 +101,21 @@ public Producer update(Producer producer) { ... }
 public void delete(String id) { ... }
 ```
 
+## Multi-Tenant Caching
+```java
+// ALWAYS include tenantId in cache keys
+@Cacheable(value = "producers", key = "#tenantId + ':' + #id")
+public Producer getById(String tenantId, String id) {
+    return producerRepository.findByTenantIdAndId(tenantId, id)
+        .orElseThrow(() -> new NotFoundException("Producer not found"));
+}
+
+@CacheEvict(value = "producers", key = "#tenantId + ':' + #producer.id")
+public Producer update(String tenantId, Producer producer) {
+    return producerRepository.save(producer);
+}
+```
+
 ## Anti-Patterns
 
 ```

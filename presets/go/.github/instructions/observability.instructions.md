@@ -159,6 +159,50 @@ func RequestLogger(next http.Handler) http.Handler {
 }
 ```
 
+## Correlation IDs
+```go
+func CorrelationID(next http.Handler) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        correlationID := r.Header.Get("X-Correlation-ID")
+        if correlationID == "" {
+            correlationID = uuid.NewString()
+        }
+        w.Header().Set("X-Correlation-ID", correlationID)
+        ctx := context.WithValue(r.Context(), correlationIDKey, correlationID)
+        next.ServeHTTP(w, r.WithContext(ctx))
+    })
+}
+
+func GetCorrelationID(ctx context.Context) string {
+    if id, ok := ctx.Value(correlationIDKey).(string); ok {
+        return id
+    }
+    return ""
+}
+```
+
+## Audit Logging
+```go
+type AuditEntry struct {
+    UserID     string         `json:"user_id"`
+    TenantID   string         `json:"tenant_id"`
+    Action     string         `json:"action"`       // "created", "updated", "deleted"
+    EntityType string         `json:"entity_type"`  // "Order", "User"
+    EntityID   string         `json:"entity_id"`
+    Timestamp  time.Time      `json:"timestamp"`
+    Changes    map[string]any `json:"changes,omitempty"`
+}
+
+func (s *AuditService) Log(ctx context.Context, entry AuditEntry) error {
+    slog.InfoContext(ctx, "audit",
+        "action", entry.Action,
+        "entity_type", entry.EntityType,
+        "entity_id", entry.EntityID,
+        "user_id", entry.UserID)
+    return s.repo.Save(ctx, entry)
+}
+```
+
 ## Anti-Patterns
 
 ```

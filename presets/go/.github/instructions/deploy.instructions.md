@@ -160,6 +160,74 @@ migrate -path migrations -database "$DATABASE_URL" up
 - **ALWAYS** have a rollback plan — see `database.instructions.md` for rollback and dirty-state recovery
 - **ALWAYS** backup before applying migrations to production
 
+## Graceful Shutdown
+
+```go
+func main() {
+    srv := &http.Server{Addr: ":8080", Handler: router}
+
+    go func() {
+        if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+            log.Fatalf("listen: %v", err)
+        }
+    }()
+
+    // Wait for SIGTERM/SIGINT
+    ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
+    defer stop()
+    <-ctx.Done()
+
+    // Graceful shutdown with timeout
+    shutdownCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+    defer cancel()
+
+    log.Println("Shutting down — draining connections...")
+    if err := srv.Shutdown(shutdownCtx); err != nil {
+        log.Fatalf("shutdown: %v", err)
+    }
+    db.Close()
+    log.Println("Shutdown complete")
+}
+```
+
+- **ALWAYS** use `signal.NotifyContext` (Go 1.16+) for clean signal handling
+- **ALWAYS** call `srv.Shutdown()` to drain in-flight requests
+- Close database pools, Redis connections, and message consumers before exiting
+
+## Blue-Green / Canary Deployments
+
+### Kubernetes Rolling Update (Default)
+```yaml
+spec:
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0   # Zero-downtime
+```
+
+### Canary with Traffic Splitting
+```yaml
+# Use a service mesh (Istio/Linkerd) or ingress controller for weighted routing
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+spec:
+  http:
+    - route:
+        - destination:
+            host: api
+            subset: stable
+          weight: 90
+        - destination:
+            host: api
+            subset: canary
+          weight: 10
+```
+
+- **ALWAYS** ensure database migrations are backward-compatible for blue-green
+- **ALWAYS** use health checks as deployment gates
+- Roll back immediately if error rate exceeds threshold
+
 ---
 
 ## See Also
@@ -169,4 +237,3 @@ migrate -path migrations -database "$DATABASE_URL" up
 - `multi-environment.instructions.md` — Per-environment configuration, migration config per env
 - `observability.instructions.md` — Health checks, readiness probes
 - `security.instructions.md` — Secrets management, TLS
-```

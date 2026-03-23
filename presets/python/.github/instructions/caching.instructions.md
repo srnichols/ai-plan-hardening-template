@@ -101,6 +101,24 @@ async def update_producer(producer: ProducerUpdate) -> None:
     r.delete(f"producer:{producer.id}")
 ```
 
+## Multi-Tenant Caching
+```python
+# ALWAYS include tenant_id in cache keys
+def tenant_cache_key(tenant_id: str, entity: str, entity_id: str) -> str:
+    return f"{tenant_id}:{entity}:{entity_id}"
+
+async def get_producer(tenant_id: str, producer_id: str) -> Optional[dict]:
+    cache_key = tenant_cache_key(tenant_id, "producer", producer_id)
+    cached = r.get(cache_key)
+    if cached:
+        return json.loads(cached)
+
+    producer = await producer_repo.get_by_id(tenant_id, producer_id)
+    if producer:
+        r.setex(cache_key, 900, json.dumps(producer))
+    return producer
+```
+
 ## Anti-Patterns
 
 ```

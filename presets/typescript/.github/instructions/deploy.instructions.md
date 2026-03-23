@@ -80,6 +80,28 @@ JWT_SECRET=change-me-in-production
 NODE_ENV=development
 ```
 
+## Health Checks
+
+```typescript
+import express from 'express';
+
+app.get('/health', async (_req, res) => {
+  try {
+    await db.$queryRaw`SELECT 1`;
+    res.json({ status: 'healthy', version: process.env.npm_package_version });
+  } catch (err) {
+    res.status(503).json({ status: 'unhealthy', error: (err as Error).message });
+  }
+});
+
+app.get('/ready', async (_req, res) => {
+  // Check all dependencies (DB, Redis, external services)
+  const checks = await Promise.allSettled([db.$queryRaw`SELECT 1`, redis.ping()]);
+  const allHealthy = checks.every((c) => c.status === 'fulfilled');
+  res.status(allHealthy ? 200 : 503).json({ ready: allHealthy });
+});
+```
+
 ## Database Migration Deployment
 
 **Migrations MUST run before the new app version starts serving traffic.**
@@ -128,6 +150,63 @@ npx prisma generate
 - **NEVER** deploy app code before migrations complete
 - **NEVER** use `prisma db push` in CI/CD — it can drop data
 - **ALWAYS** have a rollback plan — see `database.instructions.md` for rollback procedures
+
+## Graceful Shutdown
+
+```typescript
+const server = app.listen(PORT, () => console.log(`Listening on ${PORT}`));
+
+function shutdown(signal: string) {
+  console.log(`${signal} received — draining connections...`);
+  server.close(() => {
+    console.log('HTTP server closed');
+    db.$disconnect().then(() => process.exit(0));
+  });
+  // Force exit after timeout
+  setTimeout(() => process.exit(1), 30_000);
+}
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
+```
+
+- **ALWAYS** call `server.close()` to stop accepting new connections
+- **ALWAYS** disconnect database and Redis clients before exiting
+- Kubernetes sends SIGTERM → waits `terminationGracePeriodSeconds` → SIGKILL
+
+## Blue-Green / Canary Deployments
+
+### Kubernetes Rolling Update (Default)
+```yaml
+spec:
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0   # Zero-downtime
+```
+
+### Canary with Traffic Splitting
+```yaml
+# Use a service mesh (Istio/Linkerd) or ingress controller for weighted routing
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+spec:
+  http:
+    - route:
+        - destination:
+            host: api
+            subset: stable
+          weight: 90
+        - destination:
+            host: api
+            subset: canary
+          weight: 10
+```
+
+- **ALWAYS** ensure database migrations are backward-compatible for blue-green
+- **ALWAYS** use health checks as deployment gates
+- Roll back immediately if error rate exceeds threshold
 
 ---
 
