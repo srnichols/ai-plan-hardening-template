@@ -10,6 +10,26 @@
 
 > **If you are an AI coding agent** tasked with incorporating this framework into a project, read **[AGENT-SETUP.md](AGENT-SETUP.md)** — it has auto-detection rules, greenfield vs brownfield decision trees, exact non-interactive commands, merge strategies for existing guardrails, and a post-setup validator.
 
+### Quick Start Prompt for AI Agents
+
+> **Copy-paste this prompt** into your AI coding agent (Copilot, Claude, Cursor, etc.) to install the framework into your project:
+
+```
+Read the AI Plan Hardening Template repo at https://github.com/srnichols/ai-plan-hardening-template
+
+1. Read AGENT-SETUP.md for the full setup instructions
+2. Auto-detect my project's tech stack from its marker files (e.g. .csproj, package.json, pyproject.toml, go.mod, pom.xml)
+3. Clone the template repo to a temp directory
+4. Run the setup script against my project with the detected preset:
+   - PowerShell: .\setup.ps1 -Preset <detected> -ProjectPath "<my-project>" -ProjectName "<my-project-name>" -Force
+   - Bash: ./setup.sh --preset <detected> --path "<my-project>" --name "<my-project-name>" --force
+5. Replace all placeholders (<YOUR PROJECT NAME>, <YOUR TECH STACK>, <DATE>, build/test/lint commands) in the generated files with my actual project details
+6. Run the validation script to confirm setup is correct
+7. Clean up the cloned template repo
+
+After setup, explain what was installed and how to start using the planning pipeline.
+```
+
 ---
 
 ## The Problem
@@ -54,7 +74,7 @@ See **[docs/COPILOT-VSCODE-GUIDE.md](docs/COPILOT-VSCODE-GUIDE.md)** for a compl
 Click **"Use this template"** on GitHub, or clone and run the setup wizard:
 
 ```bash
-git clone https://github.com/YOUR-ORG/ai-plan-hardening-template.git my-project-plans
+git clone https://github.com/srnichols/ai-plan-hardening-template.git my-project-plans
 cd my-project-plans
 ```
 
@@ -178,6 +198,67 @@ Each preset includes **3 skills** (`.github/skills/`) — multi-step executable 
 5. Copy the Execution Prompt → paste into a NEW agent session
 6. Copy the Review Prompt → paste into a FRESH agent session
 ```
+
+---
+
+## Ongoing Usage: Building Features with the Pipeline
+
+Once the framework is installed, here's how you use it day-to-day for any new feature or significant change.
+
+### Quick Reference
+
+| Resource | Location | Purpose |
+|----------|----------|---------|
+| **Copy-paste prompts** (all 5 steps) | `docs/plans/AI-Plan-Hardening-Runbook-Instructions.md` | The main file you'll use daily |
+| **Full runbook** (templates + examples) | `docs/plans/AI-Plan-Hardening-Runbook.md` | Deep reference |
+| **VS Code walkthrough** | `docs/COPILOT-VSCODE-GUIDE.md` | Session management, context tips, memory bridging |
+| **Worked examples** | `docs/plans/examples/` | .NET, TypeScript, Python, Java, Go |
+| **Pipeline agents** | `.github/agents/plan-hardener.agent.md` → `executor.agent.md` → `reviewer-gate.agent.md` | Click-through alternative to copy-paste |
+
+### Daily Workflow Prompt
+
+> **Copy-paste this into your AI agent** whenever you have a new feature to build:
+
+```
+I need to build a new feature using the AI Plan Hardening Pipeline.
+
+1. Read docs/plans/AI-Plan-Hardening-Runbook-Instructions.md for the full workflow
+2. Read docs/plans/DEPLOYMENT-ROADMAP.md for current project status
+3. Help me draft a plan in docs/plans/ for this feature: <DESCRIBE YOUR FEATURE>
+4. Walk me through the 5-step pipeline:
+   - Step 1: Run pre-flight checks
+   - Step 2: Harden the plan (add Scope Contract, Execution Slices, Definition of Done)
+   - Step 3: Execute slice-by-slice with validation gates
+   - Step 4: Completeness sweep (eliminate TODOs, stubs, mocks)
+   - Step 5: Independent review & drift detection (new session)
+
+Use 3 separate sessions to prevent context bleed:
+- Session 1: Steps 1-2 (Plan Hardening)
+- Session 2: Steps 3-4 (Execution)
+- Session 3: Step 5 (Review)
+
+Remind me when to start a new session. Start with Step 1 now.
+```
+
+### Alternative: Pipeline Agents (No Copy-Pasting)
+
+Instead of prompts, use the pipeline agents that chain automatically with handoff buttons:
+
+1. Start a chat with the **Plan Hardener** agent
+2. Tell it: "Harden `docs/plans/<YOUR-PLAN>.md`"
+3. Click **"Start Execution →"** when hardening is done
+4. Click **"Run Review Gate →"** when execution is done
+
+Both approaches produce identical results — agents just make session transitions smoother.
+
+### When to Use the Full Pipeline vs Skip It
+
+| Change Size | Examples | Do This |
+|-------------|----------|---------|
+| **Micro** (<30 min) | Bug fix, config tweak | Just commit — no pipeline needed |
+| **Small** (30–120 min) | Single-file change | Optional — light hardening only |
+| **Medium** (2–8 hrs) | Multi-file feature, new API | **Full pipeline — all 5 steps** |
+| **Large** (1+ days) | New module, schema redesign | **Full pipeline + branch-per-slice** |
 
 ---
 
