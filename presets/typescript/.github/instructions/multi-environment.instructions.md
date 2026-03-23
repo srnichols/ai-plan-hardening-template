@@ -93,9 +93,46 @@ app.get('/readyz', async (_, res) => {
 });
 ```
 
+## Database Migrations Per Environment
+
+| Environment | Migration Strategy | Who Runs | Approval |
+|-------------|--------------------|----------|---------|
+| **development** | `prisma migrate dev` (interactive) | Developer | None |
+| **test** | `prisma migrate deploy` in CI | Pipeline | Auto |
+| **staging** | `prisma migrate deploy` via CI/CD | Pipeline | Auto |
+| **production** | `prisma migrate deploy` via CI/CD | Pipeline | Manual approval gate |
+
+### Environment-Specific Migration Config
+```bash
+# .env.development — Prisma uses shadow database for dev migrations
+DATABASE_URL=postgresql://dev:devpass@localhost:5432/contoso_dev
+SHADOW_DATABASE_URL=postgresql://dev:devpass@localhost:5432/contoso_dev_shadow
+
+# .env.staging — production-safe migrate deploy
+DATABASE_URL=postgresql://staging-db:5432/contoso_staging
+
+# .env.production — connection string injected at runtime
+# DATABASE_URL injected via secret manager, not in .env file
+```
+
+```typescript
+// prisma/schema.prisma — shadow database for dev migrations
+datasource db {
+  provider          = "postgresql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")   // Dev only
+}
+```
+
+- **NEVER** use `prisma migrate dev` in staging or production — use `prisma migrate deploy`
+- **NEVER** use `prisma db push` outside of prototyping
+- **ALWAYS** use the same migration files across all environments
+
+---
+
 ## See Also
 
-- `deploy.instructions.md` — Container config, health checks
+- `database.instructions.md` — Migration strategy, expand-contract, rollback procedures
+- `deploy.instructions.md` — Container config, health checks, migration pipeline steps
 - `observability.instructions.md` — Per-environment logging and metrics
 - `messaging.instructions.md` — Broker config per environment
-```

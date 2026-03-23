@@ -81,12 +81,24 @@ public class UserService {
 
 ## Migration Strategy (Flyway)
 
+### Non-Negotiable Migration Rules
+- **NEVER** deploy a destructive migration (drop column/table) in the same release that removes the code using it
+- **ALWAYS** review migration SQL before applying to staging or production
+- **ALWAYS** make migrations backward-compatible — the old version of the app must still work after the migration runs
+- **ALWAYS** test migrations against a copy of production data before applying to production
+- **NEVER** edit a Flyway migration that has already been applied — create a new versioned migration
+- **ALWAYS** run migrations as a separate pipeline step (or via Spring Boot auto-migration) before the app serves traffic
+
+### File Structure & Naming
 ```
 src/main/resources/db/migration/
 ├── V001__create_users_table.sql
 ├── V002__add_tenant_id_column.sql
-└── V003__create_orders_table.sql
+├── V003__create_orders_table.sql
+└── V004__add_status_v2_to_orders.sql    # Expand step
 ```
+
+**Convention**: `V{version}__{description}.sql` — double underscore between version and description
 
 ```sql
 -- V001__create_users_table.sql
@@ -101,6 +113,105 @@ CREATE TABLE users (
 CREATE INDEX idx_users_tenant ON users(tenant_id);
 ```
 
+### Flyway Commands
+```bash
+# Apply pending migrations (Maven)
+mvn flyway:migrate
+
+# Show migration status
+mvn flyway:info
+
+# Validate applied vs. available migrations
+mvn flyway:validate
+
+# Repair checksum mismatches (use with caution)
+mvn flyway:repair
+
+# Baseline an existing database (first-time Flyway adoption)
+mvn flyway:baseline -Dflyway.baselineVersion=1
+```
+
+### Spring Boot Auto-Migration
+```yaml
+# application.yml — Flyway runs automatically on startup
+spring:
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: false     # true only for first-time adoption
+    validate-on-migrate: true      # Fail if checksums don't match
+```
+
+### Safe vs. Dangerous Operations
+
+| Operation | Risk | Strategy |
+|-----------|------|----------|
+| Add column (nullable) | **Safe** | Deploy directly |
+| Add column (non-null) | **Medium** | Add nullable first → backfill → add NOT NULL constraint |
+| Add index | **Medium** | Use `CREATE INDEX CONCURRENTLY` (PostgreSQL) to avoid locking |
+| Rename column | **Dangerous** | Expand-contract: add new → copy → migrate code → drop old |
+| Drop column | **Dangerous** | Two releases: (1) stop reading/writing, (2) drop in next release |
+| Change column type | **Dangerous** | Add new column → backfill → switch reads → drop old |
+| Drop table | **Dangerous** | Only after all references removed and verified in production |
+
+### Expand-Contract Pattern (Zero-Downtime)
+
+```sql
+-- V004__expand_order_status.sql (Release 1 — EXPAND)
+ALTER TABLE orders ADD COLUMN status_v2 VARCHAR(50);
+UPDATE orders SET status_v2 = status;
+-- App code: write to BOTH columns, read from status_v2
+
+-- V005__contract_order_status.sql (Release 2 — CONTRACT, after code migrated)
+ALTER TABLE orders DROP COLUMN status;
+ALTER TABLE orders RENAME COLUMN status_v2 TO status;
+ALTER TABLE orders ALTER COLUMN status SET NOT NULL;
+```
+
+### Production Migration Checklist
+
+```
+Pre-Deploy:
+  □ Reviewed migration SQL for destructive operations (DROP, ALTER TYPE, RENAME)
+  □ Ran mvn flyway:validate — no checksum mismatches
+  □ Tested migration against staging with production-like data
+  □ Verified backward compatibility — old app version still works after migration
+  □ Backup taken or point-in-time recovery confirmed
+  □ Estimated migration duration for large tables
+  □ Checked mvn flyway:info for pending migration count
+
+Deploy:
+  □ Flyway runs on app startup (or as a separate pipeline step) BEFORE serving traffic
+  □ Health check passes after migration, before routing traffic
+  □ Monitor for lock contention during migration
+
+Post-Deploy:
+  □ Verify /actuator/health passes
+  □ Run mvn flyway:info to confirm version
+  □ Spot-check migrated data
+  □ Monitor error rates for 15 minutes
+```
+
+### Rollback Strategy
+
+```sql
+-- Flyway Community does NOT support automatic undo migrations
+-- Maintain manual rollback scripts alongside forward migrations:
+-- src/main/resources/db/rollback/
+--   U004__undo_expand_order_status.sql
+
+-- U004__undo_expand_order_status.sql
+ALTER TABLE orders DROP COLUMN IF EXISTS status_v2;
+```
+
+```bash
+# Flyway Teams/Enterprise: undo migrations
+mvn flyway:undo
+
+# Emergency: manually set Flyway version (after manual DB fix)
+mvn flyway:repair
+```
+
 ## Naming Conventions
 
 | Context | Convention | Example |
@@ -111,6 +222,8 @@ CREATE INDEX idx_users_tenant ON users(tenant_id);
 
 ## See Also
 
+- `deploy.instructions.md` — Migration pipeline steps, Docker Compose migration patterns
+- `multi-environment.instructions.md` — Per-profile Flyway config, auto-migrate settings
 - `graphql.instructions.md` — @BatchMapping, DataLoader batch queries
 - `security.instructions.md` — SQL injection prevention, parameterized queries
 - `caching.instructions.md` — Query result caching, invalidation strategies

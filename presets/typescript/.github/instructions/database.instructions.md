@@ -54,17 +54,115 @@ const users: User[] = await prisma.user.findMany();
 
 ## Migration Strategy
 
+### Non-Negotiable Migration Rules
+- **NEVER** deploy a destructive migration (drop column/table) in the same release that removes the code using it
+- **ALWAYS** review generated SQL before applying to staging or production
+- **ALWAYS** make migrations backward-compatible — the old version of the app must still work after the migration runs
+- **ALWAYS** test migrations against a copy of production data before applying to production
+- **NEVER** use `prisma db push` in production — it can drop data; use `prisma migrate deploy`
+- **ALWAYS** run migrations as a separate pipeline step before deploying the new app version
+
 ### Prisma
 ```bash
-# Create migration
+# Create migration (development only — prompts if destructive)
 npx prisma migrate dev --name add_user_profile
 
-# Apply migrations (production)
+# Apply migrations (production — exits non-zero on failure)
 npx prisma migrate deploy
 
 # Generate client after schema changes
 npx prisma generate
+
+# Check migration status
+npx prisma migrate status
+
+# Reset database (development only — DELETES ALL DATA)
+npx prisma migrate reset
 ```
+
+### Drizzle ORM
+```bash
+# Generate migration from schema changes
+npx drizzle-kit generate
+
+# Apply migrations
+npx drizzle-kit migrate
+
+# Preview changes without applying (dry-run)
+npx drizzle-kit push --dry-run
+```
+
+### Safe vs. Dangerous Operations
+
+| Operation | Risk | Strategy |
+|-----------|------|----------|
+| Add column (optional) | **Safe** | Deploy directly |
+| Add column (required) | **Medium** | Add optional first → backfill → add `@default` or make required |
+| Add index | **Medium** | Prisma handles this; for raw SQL use `CREATE INDEX CONCURRENTLY` |
+| Rename column | **Dangerous** | Expand-contract: add new → copy → update Prisma schema → drop old |
+| Drop column | **Dangerous** | Two releases: (1) remove from schema + stop using, (2) drop |
+| Change column type | **Dangerous** | Add new column → backfill → switch reads → drop old |
+| Drop table | **Dangerous** | Only after all references removed and verified in production |
+
+### Expand-Contract Pattern (Zero-Downtime)
+
+```
+Release 1 — EXPAND:
+  prisma/migrations/xxx_expand_order_status:
+    ALTER TABLE "orders" ADD COLUMN "status_v2" TEXT;
+    UPDATE "orders" SET "status_v2" = "status";
+  Code: Write to BOTH columns, read from new column
+
+Release 2 — CONTRACT:
+  prisma/migrations/xxx_contract_order_status:
+    ALTER TABLE "orders" DROP COLUMN "status";
+    ALTER TABLE "orders" RENAME COLUMN "status_v2" TO "status";
+  Code: Remove all references to old column
+```
+
+```typescript
+// Custom migration SQL for expand step (prisma/migrations/xxx/migration.sql)
+-- AlterTable
+ALTER TABLE "orders" ADD COLUMN "status_v2" TEXT;
+UPDATE "orders" SET "status_v2" = "status";
+```
+
+### Production Migration Checklist
+
+```
+Pre-Deploy:
+  □ Ran `npx prisma migrate diff` to review what will change
+  □ Reviewed prisma/migrations/xxx/migration.sql for destructive operations
+  □ Tested migration against staging with production-like data
+  □ Verified backward compatibility — old app version still works after migration
+  □ Backup taken or point-in-time recovery confirmed
+  □ Checked `npx prisma migrate status` for pending/failed migrations
+
+Deploy:
+  □ Run `npx prisma migrate deploy` BEFORE deploying new app version
+  □ Health check passes after migration, before app deploy
+  □ Monitor for lock contention during migration
+
+Post-Deploy:
+  □ Verify app health checks pass
+  □ Spot-check migrated data
+  □ Monitor error rates for 15 minutes
+```
+
+### Rollback Strategy
+
+```bash
+# Prisma does NOT support automatic rollback — you must create a new migration that reverses changes
+# Option 1: Create a counter-migration
+npx prisma migrate dev --name revert_add_user_profile
+# Then manually write the reverse DDL in the generated migration file
+
+# Option 2: For Drizzle, use down migrations or revert SQL scripts
+# migrations/rollback/
+#   0003_revert_orders_table.sql
+```
+
+**Important**: Prisma `migrate deploy` is forward-only. Always keep rollback SQL scripts alongside migrations for production emergencies.
 
 ## Naming Conventions
 
@@ -76,6 +174,8 @@ npx prisma generate
 
 ## See Also
 
+- `deploy.instructions.md` — Migration pipeline steps, Docker Compose migration patterns
+- `multi-environment.instructions.md` — Per-environment migration config, shadow database
 - `graphql.instructions.md` — DataLoader batch queries, N+1 prevention
 - `security.instructions.md` — SQL injection prevention, parameterized queries
 - `caching.instructions.md` — Query result caching, invalidation strategies

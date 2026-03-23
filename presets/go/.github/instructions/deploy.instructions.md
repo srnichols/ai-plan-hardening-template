@@ -105,10 +105,68 @@ containers:
       periodSeconds: 5
 ```
 
+## Database Migration Deployment
+
+**Migrations MUST run before the new app version starts serving traffic.**
+
+### Pipeline Order
+```
+1. Build & test ──► 2. Run migrations ──► 3. Health check ──► 4. Deploy app ──► 5. Smoke test
+                         ▲                     ▲
+                    Fail = abort           Fail = rollback
+```
+
+### Option A: Embedded Migrations (Recommended)
+```go
+// Migrations run on startup before the server starts listening
+func main() {
+    cfg := loadConfig()
+    if err := runMigrations(cfg.DatabaseURL); err != nil {
+        log.Fatalf("migration failed: %v", err)
+    }
+    // Start server only after migrations succeed
+    startServer(cfg)
+}
+```
+
+### Option B: CLI in Docker Compose
+```yaml
+services:
+  migrate:
+    image: migrate/migrate
+    volumes:
+      - ./migrations:/migrations
+    command: ["-path", "/migrations", "-database", "postgres://app:secret@db:5432/app?sslmode=disable", "up"]
+    depends_on:
+      db:
+        condition: service_healthy
+  api:
+    build: .
+    depends_on:
+      migrate:
+        condition: service_completed_successfully   # App starts only after migration succeeds
+```
+
+### CI/CD Pipeline Step
+```bash
+# Check current version
+migrate -path migrations -database "$DATABASE_URL" version
+
+# Apply pending migrations
+migrate -path migrations -database "$DATABASE_URL" up
+```
+
+- **NEVER** deploy app code before migrations complete
+- **ALWAYS** have a rollback plan — see `database.instructions.md` for rollback and dirty-state recovery
+- **ALWAYS** backup before applying migrations to production
+
+---
+
 ## See Also
 
+- `database.instructions.md` — Migration strategy, expand-contract, rollback procedures
 - `dapr.instructions.md` — Dapr sidecar deployment, component configuration
-- `multi-environment.instructions.md` — Per-environment configuration
+- `multi-environment.instructions.md` — Per-environment configuration, migration config per env
 - `observability.instructions.md` — Health checks, readiness probes
 - `security.instructions.md` — Secrets management, TLS
 ```

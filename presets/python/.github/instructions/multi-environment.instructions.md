@@ -105,9 +105,48 @@ async def readiness():
     )
 ```
 
+## Database Migrations Per Environment
+
+| Environment | Migration Strategy | Who Runs | Approval |
+|-------------|--------------------|----------|---------|
+| **development** | `alembic upgrade head` on startup | Developer | None |
+| **testing** | `alembic upgrade head` in CI | Pipeline | Auto |
+| **staging** | `alembic upgrade head` via CI/CD | Pipeline | Auto |
+| **production** | Reviewed SQL via CI/CD | Pipeline | Manual approval gate |
+
+### Environment-Specific Alembic Config
+```ini
+# alembic.ini — base config (connection string overridden per env)
+[alembic]
+script_location = alembic
+sqlalchemy.url = %(DATABASE_URL)s
+```
+
+```python
+# alembic/env.py — Read from environment
+from src.config import settings
+
+def run_migrations_online():
+    connectable = create_async_engine(settings.database_url)
+    # ...
+```
+
+```bash
+# Production: generate SQL for DBA review before applying
+alembic upgrade head --sql > migrations.sql
+# Review migrations.sql, then apply:
+alembic upgrade head
+```
+
+- **NEVER** run `alembic downgrade base` in production — use targeted `alembic downgrade -1`
+- **ALWAYS** use the same migration files across all environments
+- **ALWAYS** generate `--sql` output for production review
+
+---
+
 ## See Also
 
-- `deploy.instructions.md` — Container config, health checks
+- `database.instructions.md` — Migration strategy, expand-contract, rollback procedures
+- `deploy.instructions.md` — Container config, health checks, migration pipeline steps
 - `observability.instructions.md` — Per-environment logging and metrics
 - `messaging.instructions.md` — Broker config per environment
-```

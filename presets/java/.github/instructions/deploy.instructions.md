@@ -111,10 +111,69 @@ ENTRYPOINT ["java", \
     "-jar", "app.jar"]
 ```
 
+## Database Migration Deployment
+
+**Migrations MUST run before the app starts serving traffic.** Flyway runs automatically on Spring Boot startup (default behavior), or as a separate pipeline step.
+
+### Pipeline Order
+```
+1. Build & test ──► 2. Run migrations ──► 3. Health check ──► 4. Deploy app ──► 5. Smoke test
+                         ▲                     ▲
+                    Fail = abort           Fail = rollback
+```
+
+### Option A: Spring Boot Auto-Migration (Default)
+```yaml
+# application.yml — Flyway runs before the app serves requests
+spring:
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    validate-on-migrate: true
+```
+
+### Option B: Separate Pipeline Step
+```bash
+# Validate migrations match applied state
+mvn flyway:validate
+
+# Apply pending migrations
+mvn flyway:migrate -Dflyway.url=$DATABASE_URL -Dflyway.user=$DB_USER -Dflyway.password=$DB_PASSWORD
+
+# Check status
+mvn flyway:info
+```
+
+### Docker Compose (Development)
+```yaml
+services:
+  migrate:
+    build: .
+    entrypoint: ["java", "-jar", "app.jar", "--spring.main.web-application-type=none"]
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/app
+      - SPRING_DATASOURCE_USERNAME=app
+      - SPRING_DATASOURCE_PASSWORD=secret
+    depends_on:
+      db:
+        condition: service_healthy
+  api:
+    build: .
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+```
+
+- **NEVER** deploy app code before migrations complete
+- **NEVER** edit a Flyway migration that has already been applied
+- **ALWAYS** have a rollback plan — see `database.instructions.md` for rollback procedures
+
+---
+
 ## See Also
 
+- `database.instructions.md` — Migration strategy, expand-contract, rollback procedures
 - `dapr.instructions.md` — Dapr sidecar deployment, component configuration
-- `multi-environment.instructions.md` — Per-environment configuration
+- `multi-environment.instructions.md` — Per-environment configuration, migration config per env
 - `observability.instructions.md` — Health checks, readiness probes
 - `security.instructions.md` — Secrets management, TLS
-```

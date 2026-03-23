@@ -85,10 +85,57 @@ async def health_check():
     return {"status": "healthy", "version": settings.app_version}
 ```
 
+## Database Migration Deployment
+
+**Migrations MUST run before the new app version starts serving traffic.**
+
+### Pipeline Order
+```
+1. Build & test ──► 2. Run migrations ──► 3. Health check ──► 4. Deploy app ──► 5. Smoke test
+                         ▲                     ▲
+                    Fail = abort           Fail = rollback
+```
+
+### Docker Compose (Development)
+```yaml
+services:
+  migrate:
+    build: .
+    command: ["alembic", "upgrade", "head"]
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://app:secret@db:5432/app
+    depends_on:
+      db:
+        condition: service_healthy
+  api:
+    build: .
+    depends_on:
+      migrate:
+        condition: service_completed_successfully   # App starts only after migration succeeds
+```
+
+### CI/CD Pipeline Step
+```bash
+# Check current migration state
+alembic current
+
+# Generate SQL for review (dry-run)
+alembic upgrade head --sql > migrations.sql
+
+# Apply pending migrations
+alembic upgrade head
+```
+
+- **NEVER** deploy app code before migrations complete
+- **ALWAYS** have a rollback plan — see `database.instructions.md` for rollback procedures
+- **ALWAYS** backup before applying migrations to production
+
+---
+
 ## See Also
 
+- `database.instructions.md` — Migration strategy, expand-contract, rollback procedures
 - `dapr.instructions.md` — Dapr sidecar deployment, component configuration
-- `multi-environment.instructions.md` — Per-environment configuration
+- `multi-environment.instructions.md` — Per-environment configuration, migration config per env
 - `observability.instructions.md` — Health checks, readiness probes
 - `security.instructions.md` — Secrets management, TLS
-```

@@ -119,9 +119,54 @@ management:
         enabled: true  # /actuator/health/liveness, /actuator/health/readiness
 ```
 
+## Database Migrations Per Environment
+
+| Environment | Migration Strategy | Who Runs | Approval |
+|-------------|--------------------|----------|---------|
+| **dev** | Flyway auto-migrate on startup | Spring Boot | None |
+| **test** | Flyway auto-migrate in test profile | Spring Boot | Auto |
+| **staging** | Flyway auto-migrate or pipeline step | Pipeline / Spring | Auto |
+| **prod** | Pipeline step with manual approval | Pipeline | Manual approval gate |
+
+### Per-Profile Flyway Config
+```yaml
+# application-dev.yml — auto-migrate on startup
+spring:
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true        # First-time Flyway adoption convenience
+
+# application-staging.yml
+spring:
+  flyway:
+    enabled: true
+    validate-on-migrate: true        # Fail if checksums don't match
+    baseline-on-migrate: false
+
+# application-prod.yml — auto-migrate disabled; run via pipeline step
+spring:
+  flyway:
+    enabled: false                   # Migrations run as a separate pipeline step
+    validate-on-migrate: true
+```
+
+```bash
+# CI/CD pipeline step for production
+mvn flyway:validate -Dflyway.url=$DATABASE_URL
+mvn flyway:migrate -Dflyway.url=$DATABASE_URL -Dflyway.user=$DB_USER -Dflyway.password=$DB_PASSWORD
+mvn flyway:info -Dflyway.url=$DATABASE_URL
+```
+
+- **NEVER** enable `baseline-on-migrate` in production
+- **ALWAYS** use the same migration files across all profiles
+- **ALWAYS** validate checksums before migrating (`validate-on-migrate: true`)
+
+---
+
 ## See Also
 
-- `deploy.instructions.md` — Container config, health checks
+- `database.instructions.md` — Migration strategy, expand-contract, rollback procedures
+- `deploy.instructions.md` — Container config, health checks, migration pipeline steps
 - `observability.instructions.md` — Per-environment logging and metrics
 - `messaging.instructions.md` — Broker config per environment
-```

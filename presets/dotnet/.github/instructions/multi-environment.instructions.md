@@ -93,9 +93,45 @@ app.MapHealthChecks("/readyz", new()    // Readiness (checks dependencies)
 });
 ```
 
+## Database Migrations Per Environment
+
+| Environment | Migration Strategy | Who Runs | Approval |
+|-------------|--------------------|----------|---------|
+| **Development** | `dotnet ef database update` on startup | Developer | None |
+| **Staging** | Idempotent SQL script via CI/CD | Pipeline | Auto |
+| **Production** | Reviewed SQL script via CI/CD | Pipeline | Manual approval gate |
+
+### Environment-Specific Migration Config
+```json
+// appsettings.Development.json — auto-migrate on startup (dev convenience)
+{ "Database": { "AutoMigrate": true } }
+
+// appsettings.Staging.json — migrations run via pipeline step
+{ "Database": { "AutoMigrate": false } }
+
+// appsettings.Production.json — NEVER auto-migrate in production
+{ "Database": { "AutoMigrate": false } }
+```
+
+```csharp
+// Program.cs — conditional auto-migration
+if (app.Configuration.GetValue<bool>("Database:AutoMigrate"))
+{
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await db.Database.MigrateAsync();
+}
+```
+
+- **NEVER** enable auto-migration in production — always use reviewed pipeline steps
+- **ALWAYS** use the same migration scripts across all environments — no env-specific SQL
+- Connection strings per environment are already handled by the config hierarchy above
+
+---
+
 ## See Also
 
-- `deploy.instructions.md` — Container config, health checks
+- `database.instructions.md` — Migration strategy, expand-contract, rollback procedures
+- `deploy.instructions.md` — Container config, health checks, migration pipeline steps
 - `observability.instructions.md` — Per-environment logging and metrics
 - `messaging.instructions.md` — Broker config per environment
-```

@@ -107,9 +107,54 @@ router.Get("/readyz", func(w http.ResponseWriter, r *http.Request) {
 })
 ```
 
+## Database Migrations Per Environment
+
+| Environment | Migration Strategy | Who Runs | Approval |
+|-------------|--------------------|----------|---------|
+| **development** | Embedded migrations on startup | App binary | None |
+| **test** | Embedded migrations in test setup | Test binary | Auto |
+| **staging** | CLI or embedded via CI/CD | Pipeline | Auto |
+| **production** | CLI via CI/CD pipeline step | Pipeline | Manual approval gate |
+
+### Environment-Specific Migration Config
+```yaml
+# config.development.yaml — auto-migrate on startup
+database_url: "postgresql://dev:devpass@localhost:5432/contoso_dev"
+auto_migrate: true
+
+# config.staging.yaml
+database_url: "postgresql://staging-db:5432/contoso_staging"
+auto_migrate: true       # Or false if using CLI pipeline step
+
+# Production: all config from env vars
+# DATABASE_URL=postgresql://...
+# AUTO_MIGRATE=false
+```
+
+```go
+// Conditional auto-migration
+if cfg.AutoMigrate {
+    if err := runMigrations(cfg.DatabaseURL); err != nil {
+        log.Fatalf("migration failed: %v", err)
+    }
+}
+```
+
+```bash
+# CI/CD pipeline step for production
+migrate -path migrations -database "$DATABASE_URL" version    # Check current state
+migrate -path migrations -database "$DATABASE_URL" up         # Apply pending
+```
+
+- **NEVER** enable auto-migrate in production without a pipeline gate
+- **ALWAYS** use the same migration files across all environments
+- **ALWAYS** check for dirty state before applying migrations
+
+---
+
 ## See Also
 
-- `deploy.instructions.md` — Container config, health checks
+- `database.instructions.md` — Migration strategy, expand-contract, rollback procedures
+- `deploy.instructions.md` — Container config, health checks, migration pipeline steps
 - `observability.instructions.md` — Per-environment logging and metrics
 - `messaging.instructions.md` — Broker config per environment
-```
