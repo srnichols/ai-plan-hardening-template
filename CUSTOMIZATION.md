@@ -465,6 +465,49 @@ See [docs/EXTENSIONS.md](docs/EXTENSIONS.md) for the full guide covering:
 
 ---
 
+## Lifecycle Hooks (Automatic)
+
+Plan Forge installs **lifecycle hooks** (`.github/hooks/plan-forge.json`) that run automatically during Copilot Agent sessions:
+
+| Hook | When | What It Does |
+|------|------|-------------|
+| **SessionStart** | New session opens | Injects Project Principles, current phase, forbidden patterns, and Plan Forge version into context |
+| **PreToolUse** | Before any file edit | Reads the active plan's Forbidden Actions and **blocks** edits to forbidden paths |
+| **PostToolUse** | After any file edit | Scans the edited file for TODO/FIXME/stub markers and warns immediately |
+
+**No configuration needed** — hooks are installed by `setup.ps1` and run automatically. To customize:
+- Edit `.github/hooks/plan-forge.json` to add/remove hook events
+- Edit `.github/hooks/scripts/*.sh` / `*.ps1` to change hook behavior
+- Use `/create-hook` in Copilot Chat to generate new hooks with AI assistance
+
+---
+
+## Skill Slash Commands (Automatic)
+
+After setup, three skills are available as slash commands in Copilot Chat:
+
+| Command | What It Does |
+|---------|-------------|
+| `/database-migration` | Generate, review, test, and deploy schema migrations |
+| `/staging-deploy` | Build, push, migrate, deploy, and verify on staging |
+| `/test-sweep` | Run all test suites and aggregate results |
+
+Type `/` in the chat input to see these alongside your prompt templates. Add `user-invocable: false` to a skill's frontmatter to hide it from the menu while keeping it auto-invocable.
+
+---
+
+## Installing as a VS Code Plugin (Alternative to setup.ps1)
+
+Instead of running `setup.ps1`, you can install Plan Forge as a **VS Code agent plugin**:
+
+1. Open Command Palette → `Chat: Install Plugin From Source`
+2. Enter: `https://github.com/srnichols/plan-forge`
+3. Plan Forge's skills, agents, hooks, and prompts appear in chat
+
+> **Note**: The plugin system is in Preview. For full control over installed files, use `setup.ps1`.
+
+---
+
 ## CLI Quick Reference (Optional)
 
 The `pforge` CLI is a convenience wrapper — every command shows the equivalent manual steps.

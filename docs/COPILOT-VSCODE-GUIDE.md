@@ -365,18 +365,27 @@ Review the authentication flow in src/auth/ for OWASP Top 10 vulnerabilities.
 
 Multi-step executable procedures that chain together tool calls. Each skill file defines a step-by-step workflow with validation gates between steps.
 
-**How to use in Copilot Chat**:
-```
-#file:.github/skills/database-migration/SKILL.md
-Create a migration to add an "orders" table with the columns described in the plan.
-```
+**How to use in Copilot Chat** — two ways:
+
+1. **Slash command** (recommended): Type `/` in the chat input and select the skill:
+   ```
+   /database-migration add an "orders" table with the columns described in the plan
+   /staging-deploy the API service
+   /test-sweep
+   ```
+
+2. **File reference**: Reference the skill file directly:
+   ```
+   #file:.github/skills/database-migration/SKILL.md
+   Create a migration to add an "orders" table.
+   ```
 
 **Available skills** (3 per preset):
-| Skill | When to Use |
-|-------|-------------|
-| `database-migration/` | Creating, validating, and deploying schema changes |
-| `staging-deploy/` | Full deployment pipeline from build to verification |
-| `test-sweep/` | Running all test suites with aggregated reporting |
+| Skill | Slash Command | When to Use |
+|-------|--------------|-------------|
+| `database-migration/` | `/database-migration` | Creating, validating, and deploying schema changes |
+| `staging-deploy/` | `/staging-deploy` | Full deployment pipeline from build to verification |
+| `test-sweep/` | `/test-sweep` | Running all test suites with aggregated reporting |
 
 #### AI Agent Discoverability
 
@@ -386,6 +395,30 @@ All three file types follow consistent naming conventions for discoverability:
 - **Skills**: `SKILL.md` in `.github/skills/{name}/`
 
 AI agents can discover available capabilities by listing these directories. The `copilot-instructions.md` file at the repo root catalogs all available prompts, agents, and skills with descriptions.
+
+#### Lifecycle Hooks (`.github/hooks/`)
+
+Plan Forge includes lifecycle hooks that run automatically during agent sessions — no manual activation needed.
+
+| Hook | Effect |
+|------|--------|
+| **SessionStart** | Auto-injects Project Principles, current phase, and Plan Forge version into every session's context |
+| **PreToolUse** | Reads the active plan's Forbidden Actions and blocks file edits to forbidden paths before they happen |
+| **PostToolUse** | Scans edited files for TODO/FIXME/stub/placeholder markers and warns in the chat immediately |
+
+**Customizing hooks**: Edit `.github/hooks/plan-forge.json` or `.github/hooks/scripts/` to change behavior. Use `/create-hook` in chat to generate new hooks with AI assistance.
+
+**Disabling hooks**: Remove or rename `.github/hooks/plan-forge.json` to disable all Plan Forge hooks.
+
+#### VS Code Checkpoints
+
+VS Code automatically creates checkpoints (snapshots) during Copilot Agent sessions. Use them for quick rollback without Git:
+
+1. Look for checkpoint markers between messages in the Chat view
+2. Click a checkpoint to preview the state
+3. Click **Restore** to roll back all files to that snapshot
+
+> **Tip**: Checkpoints are great for undoing a failed slice mid-session. For permanent rollback across sessions, use the Git options in the [Rollback Protocol](plans/AI-Plan-Hardening-Runbook.md#rollback-protocol).
 
 ### 1. Front-Load Context
 

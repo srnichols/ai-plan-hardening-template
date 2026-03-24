@@ -124,6 +124,24 @@ This project uses the **Plan Forge Pipeline** for feature development.
 
 > **Note**: Instruction files auto-load via their `applyTo` frontmatter when you edit matching files.
 
+### Skill Slash Commands
+
+| Command | What It Does |
+|---------|-------------|
+| `/database-migration` | Generate, review, test, and deploy schema migrations |
+| `/staging-deploy` | Build, push, migrate, deploy, and verify on staging |
+| `/test-sweep` | Run all test suites and aggregate results |
+
+### Lifecycle Hooks (`.github/hooks/`)
+
+Hooks run automatically during agent sessions — no manual activation needed:
+
+| Hook | Effect |
+|------|--------|
+| **SessionStart** | Injects Project Principles, current phase, and forbidden patterns into context |
+| **PreToolUse** | Blocks file edits to paths listed in the active plan's Forbidden Actions |
+| **PostToolUse** | Warns on TODO/FIXME/stub markers found in edited files |
+
 ---
 
 ## Git Workflow
