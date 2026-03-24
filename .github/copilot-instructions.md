@@ -82,6 +82,9 @@ This project uses the **Plan Forge Pipeline** for feature development.
 - **Runbook**: `docs/plans/AI-Plan-Hardening-Runbook.md`
 - **Instructions**: `docs/plans/AI-Plan-Hardening-Runbook-Instructions.md`
 - **Roadmap**: `docs/plans/DEPLOYMENT-ROADMAP.md`
+- **Project Principles**: `docs/plans/PROJECT-PRINCIPLES.md` (if created)
+- **Extensions**: `docs/EXTENSIONS.md`
+- **CLI Guide**: `docs/CLI-GUIDE.md`
 - **VS Code Guide**: `docs/COPILOT-VSCODE-GUIDE.md`
 
 ### Pipeline Prompts
@@ -95,6 +98,7 @@ This project uses the **Plan Forge Pipeline** for feature development.
 | `step4-completeness-sweep.prompt.md` | Eliminate TODOs, stubs, mocks |
 | `step5-review-gate.prompt.md` | Independent review & drift detection |
 | `project-profile.prompt.md` | Generate project-specific guardrails |
+| `project-principles.prompt.md` | Define project principles, commitments, and boundaries |
 
 ### Instruction Files
 
@@ -102,8 +106,23 @@ This project uses the **Plan Forge Pipeline** for feature development.
 |------|--------|
 | `architecture-principles.instructions.md` | Core architecture rules (universal baseline) |
 | `project-profile.instructions.md` | Project-specific quality standards (generate with `project-profile.prompt.md`) |
+| `project-principles.instructions.md` | Project Principles guardrails (auto-loads when `PROJECT-PRINCIPLES.md` exists) |
 | `git-workflow.instructions.md` | Commit conventions |
-| (add your domain files here) | |
+| `api-patterns.instructions.md` | REST conventions, pagination, error responses |
+| `auth.instructions.md` | JWT/OIDC, RBAC, multi-tenant isolation |
+| `caching.instructions.md` | Redis, in-memory cache, TTL strategies |
+| `database.instructions.md` | ORM/query patterns, migrations, connection management |
+| `deploy.instructions.md` | Dockerfiles, health checks, container optimization |
+| `errorhandling.instructions.md` | Exception hierarchy, ProblemDetails, error boundaries |
+| `messaging.instructions.md` | Pub/sub, job queues, event-driven patterns |
+| `multi-environment.instructions.md` | Dev/staging/prod config, environment detection |
+| `observability.instructions.md` | OpenTelemetry, structured logging, metrics |
+| `performance.instructions.md` | Hot/cold path analysis, allocation reduction |
+| `security.instructions.md` | Input validation, secret management, CORS |
+| `testing.instructions.md` | Unit tests, integration tests, test containers |
+| `version.instructions.md` | Semantic versioning, commit-driven bumps |
+
+> **Note**: Instruction files auto-load via their `applyTo` frontmatter when you edit matching files.
 
 ---
 

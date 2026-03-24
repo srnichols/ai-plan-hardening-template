@@ -9,7 +9,20 @@
 
 The setup wizard copies preset files and generates your project-specific configuration. Here's what to customize next:
 
-### 1. Generate a Project Profile (Recommended)
+### 1. Define Project Principles (Recommended)
+
+Run the **Project Principles** prompt to declare your project's non-negotiable principles:
+
+1. Open VS Code → Copilot Chat → Agent Mode
+2. Use the prompt: `.github/prompts/project-principles.prompt.md`
+3. Choose your path: **A)** Interview, **B)** Starter set for your stack, or **C)** Discover from codebase
+4. The prompt generates `docs/plans/PROJECT-PRINCIPLES.md`
+
+This creates binding declarations — what the project believes, what tech is locked in, what patterns are forbidden. Checked automatically in Steps 1, 2, and 5.
+
+> **Not sure what your principles should be?** Pick Path B — it offers stack-specific starter principles you can accept, modify, or reject.
+
+### 2. Generate a Project Profile (Recommended)
 
 Run the **Project Profile** prompt to customize guardrails for your project:
 
@@ -17,6 +30,8 @@ Run the **Project Profile** prompt to customize guardrails for your project:
 2. Use the prompt: `.github/prompts/project-profile.prompt.md`
 3. Answer the interview questions about your project's quality standards
 4. The prompt generates `.github/instructions/project-profile.instructions.md`
+
+**Project Principles vs Project Profile**: Principles = what the project *believes* (human declarations). Profile = how Copilot should *write code* (generated guardrails). Both optional, both complementary.
 
 This creates **project-specific** quality standards that supplement the universal baseline.
 
