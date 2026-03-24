@@ -21,6 +21,18 @@
 
 ---
 
+## Beyond Vibe Coding
+
+AI coding tools make it easy to generate code fast. But fast isn't the same as good. Without structure, AI-generated code tends to be untestable, insecure, architecturally inconsistent, and impossible to maintain at scale. That's fine for prototypes — it's not fine for production systems.
+
+**Plan Forge exists because "it works" isn't enough.** Enterprise-grade software needs separation of concerns, proper error handling, security at every boundary, tenant isolation, comprehensive testing, and architecture that a team can reason about six months from now. These aren't optional extras — they're the difference between a demo and a system.
+
+This framework doesn't slow you down. It teaches the AI your standards so you **move fast *and* build right** — with guardrails that enforce best practices whether you're a junior developer learning the craft or a senior architect protecting the system.
+
+> *Vibe coding gets you a prototype. Plan Forge gets you a product.*
+
+---
+
 ## What Is This? (Plain English)
 
 When you use AI coding tools (like GitHub Copilot, Cursor, or Claude) to build software, they're great at writing code — but they tend to go off-script. They'll add features you didn't ask for, skip tests, make architecture decisions without telling you, and forget what they were doing halfway through.
