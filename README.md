@@ -589,6 +589,13 @@ After setup, explain what was installed and how to start using the planning pipe
 
 ---
 
+## Author
+
+**Scott Nichols** — Cloud Solutions Architect  
+GitHub: [@srnichols](https://github.com/srnichols)
+
+---
+
 ## License
 
 MIT — see [LICENSE](LICENSE) for details.
