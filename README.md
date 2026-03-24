@@ -29,6 +29,8 @@ AI coding tools make it easy to generate code fast. But fast isn't the same as g
 
 This framework doesn't slow you down. It teaches the AI your standards so you **move fast *and* build right** — with guardrails that enforce best practices whether you're a junior developer learning the craft or a senior architect protecting the system.
 
+At its core, Plan Forge is a **specification-driven framework**. Every feature starts as a spec (Step 0), gets hardened into a binding execution contract (Step 2), is built slice-by-slice against that contract (Step 3), and is independently verified for spec compliance (Step 5). The spec is the source of truth — not the code, not the AI's interpretation. Already use a spec-driven workflow? Plan Forge picks up where your specs end and ensures they're actually followed.
+
 > *Vibe coding gets you a prototype. Plan Forge gets you a product.*
 
 ---
