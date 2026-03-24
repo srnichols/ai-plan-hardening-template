@@ -46,6 +46,8 @@ COMMANDS:
   status            Show all phases from DEPLOYMENT-ROADMAP.md with status
   new-phase <name>  Create a new phase plan file and add to roadmap
   branch <plan>     Create branch matching plan's declared Branch Strategy
+  commit <plan> <N> Commit with conventional message from slice N's goal
+  phase-status <plan> <status>  Update phase status in roadmap (planned|in-progress|complete|paused)
   ext install <p>   Install extension from path
   ext list          List installed extensions
   ext remove <name> Remove an installed extension
@@ -267,6 +269,122 @@ cmd_branch() {
     echo "CREATED  branch: $branch_name"
 }
 
+# ─── Command: commit ───────────────────────────────────────────────────
+cmd_commit() {
+    if [ $# -lt 2 ]; then
+        echo "ERROR: Plan file and slice number required." >&2
+        echo "  Usage: pforge commit <plan-file> <slice-number>" >&2
+        exit 1
+    fi
+
+    local plan_file="$1"
+    local slice_num="$2"
+    local dry_run=false
+    for arg in "$@"; do
+        [ "$arg" = "--dry-run" ] && dry_run=true
+    done
+
+    [ ! -f "$plan_file" ] && plan_file="$REPO_ROOT/$plan_file"
+    if [ ! -f "$plan_file" ]; then
+        echo "ERROR: Plan file not found: $1" >&2
+        exit 1
+    fi
+
+    local plan_name
+    plan_name="$(basename "$plan_file" .md)"
+
+    # Extract phase number
+    local phase_num=""
+    if [[ "$plan_name" =~ Phase-([0-9]+) ]]; then
+        phase_num="${BASH_REMATCH[1]}"
+    fi
+
+    # Extract slice goal
+    local slice_goal="slice $slice_num"
+    local goal_line
+    goal_line="$(grep -A1 "### Slice.*${slice_num}" "$plan_file" | head -2 || true)"
+    if [[ "$goal_line" =~ Slice[[:space:]]*[0-9.]*${slice_num}[[:space:]]*[:\—–-][[:space:]]*(.+) ]]; then
+        slice_goal="${BASH_REMATCH[1]}"
+    elif echo "$goal_line" | grep -q '^\*\*Goal\*\*:'; then
+        slice_goal="$(echo "$goal_line" | grep '^\*\*Goal\*\*:' | sed 's/\*\*Goal\*\*:\s*//')"
+    fi
+
+    # Build commit message
+    local scope
+    if [ -n "$phase_num" ]; then
+        scope="phase-$phase_num/slice-$slice_num"
+    else
+        scope="slice-$slice_num"
+    fi
+    local commit_msg="feat($scope): $slice_goal"
+
+    print_manual_steps "commit" \
+        "Read slice $slice_num goal from the plan" \
+        "Run: git add -A" \
+        "Run: git commit -m \"$commit_msg\""
+
+    if $dry_run; then
+        echo "[DRY RUN] Would commit with message:"
+        echo "  $commit_msg"
+        return 0
+    fi
+
+    git add -A
+    git commit -m "$commit_msg"
+    echo "COMMITTED  $commit_msg"
+}
+
+# ─── Command: phase-status ─────────────────────────────────────────────
+cmd_phase_status() {
+    if [ $# -lt 2 ]; then
+        echo "ERROR: Plan file and status required." >&2
+        echo "  Usage: pforge phase-status <plan-file> <status>" >&2
+        echo "  Status: planned | in-progress | complete | paused" >&2
+        exit 1
+    fi
+
+    local plan_file="$1"
+    local new_status="$2"
+
+    local status_text
+    case "$new_status" in
+        planned)     status_text="📋 Planned" ;;
+        in-progress) status_text="🚧 In Progress" ;;
+        complete)    status_text="✅ Complete" ;;
+        paused)      status_text="⏸️ Paused" ;;
+        *)
+            echo "ERROR: Invalid status '$new_status'. Use: planned, in-progress, complete, paused" >&2
+            exit 1
+            ;;
+    esac
+
+    local plan_basename
+    plan_basename="$(basename "$plan_file")"
+
+    local roadmap="$REPO_ROOT/docs/plans/DEPLOYMENT-ROADMAP.md"
+    if [ ! -f "$roadmap" ]; then
+        echo "ERROR: DEPLOYMENT-ROADMAP.md not found." >&2
+        exit 1
+    fi
+
+    print_manual_steps "phase-status" \
+        "Open docs/plans/DEPLOYMENT-ROADMAP.md" \
+        "Find the phase entry for $plan_basename" \
+        "Change **Status**: to $status_text"
+
+    # Update the status line following the plan link
+    if grep -q "$plan_basename" "$roadmap"; then
+        if [[ "$(uname)" == "Darwin" ]]; then
+            sed -i '' "/$plan_basename/{n;s/\*\*Status\*\*:.*/\*\*Status\*\*: $status_text/;}" "$roadmap"
+        else
+            sed -i "/$plan_basename/{n;s/\*\*Status\*\*:.*/\*\*Status\*\*: $status_text/;}" "$roadmap"
+        fi
+        echo "UPDATED  $plan_basename → $status_text"
+    else
+        echo "WARN: Could not find $plan_basename in roadmap. Update manually."
+    fi
+}
+
 # ─── Command: ext ──────────────────────────────────────────────────────
 cmd_ext() {
     if [ $# -eq 0 ]; then
@@ -434,13 +552,15 @@ COMMAND="${1:-help}"
 shift 2>/dev/null || true
 
 case "$COMMAND" in
-    init)      cmd_init "$@" ;;
-    check)     cmd_check "$@" ;;
-    status)    cmd_status ;;
-    new-phase) cmd_new_phase "$@" ;;
-    branch)    cmd_branch "$@" ;;
-    ext)       cmd_ext "$@" ;;
-    help|--help) show_help ;;
+    init)         cmd_init "$@" ;;
+    check)        cmd_check "$@" ;;
+    status)       cmd_status ;;
+    new-phase)    cmd_new_phase "$@" ;;
+    branch)       cmd_branch "$@" ;;
+    commit)       cmd_commit "$@" ;;
+    phase-status) cmd_phase_status "$@" ;;
+    ext)          cmd_ext "$@" ;;
+    help|--help)  show_help ;;
     *)
         echo "ERROR: Unknown command '$COMMAND'" >&2
         show_help

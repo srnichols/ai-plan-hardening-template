@@ -62,6 +62,8 @@ function Show-Help {
     Write-Host "  status            Show all phases from DEPLOYMENT-ROADMAP.md with status"
     Write-Host "  new-phase <name>  Create a new phase plan file and add to roadmap"
     Write-Host "  branch <plan>     Create branch matching plan's declared Branch Strategy"
+    Write-Host "  commit <plan> <N> Commit with conventional message from slice N's goal"
+    Write-Host "  phase-status <plan> <status>  Update phase status in roadmap (planned|in-progress|complete|paused)"
     Write-Host "  ext install <p>   Install extension from path"
     Write-Host "  ext list          List installed extensions"
     Write-Host "  ext remove <name> Remove an installed extension"
@@ -304,6 +306,118 @@ function Invoke-Branch {
     Write-Host "CREATED  branch: $branchName" -ForegroundColor Green
 }
 
+# ─── Command: commit ───────────────────────────────────────────────────
+function Invoke-Commit {
+    if (-not $Arguments -or $Arguments.Count -lt 2) {
+        Write-Host "ERROR: Plan file and slice number required." -ForegroundColor Red
+        Write-Host "  Usage: pforge commit <plan-file> <slice-number>" -ForegroundColor Yellow
+        exit 1
+    }
+
+    $planFile = $Arguments[0]
+    $sliceNum = $Arguments[1]
+    $dryRun = $Arguments -contains '--dry-run'
+
+    if (-not (Test-Path $planFile)) {
+        $planFile = Join-Path $RepoRoot $planFile
+    }
+    if (-not (Test-Path $planFile)) {
+        Write-Host "ERROR: Plan file not found: $($Arguments[0])" -ForegroundColor Red
+        exit 1
+    }
+
+    $content = Get-Content $planFile -Raw
+    $planName = [System.IO.Path]::GetFileNameWithoutExtension($planFile)
+
+    # Extract phase number from filename (Phase-N-...)
+    $phaseNum = ""
+    if ($planName -match 'Phase-(\d+)') { $phaseNum = $Matches[1] }
+
+    # Extract slice goal from "### Slice N..." or "### Slice N.X — Title"
+    $sliceGoal = "slice $sliceNum"
+    $slicePattern = "###\s+Slice\s+[\d.]*$sliceNum[^#]*?(?=###|\z)"
+    if ($content -match "###\s+Slice\s+[\d.]*${sliceNum}\s*[:\—–-]\s*(.+)") {
+        $sliceGoal = $Matches[1].Trim()
+    }
+    elseif ($content -match "###\s+Slice\s+[\d.]*${sliceNum}\s*\n\*\*Goal\*\*:\s*(.+)") {
+        $sliceGoal = $Matches[1].Trim()
+    }
+
+    # Build conventional commit message
+    $scope = if ($phaseNum) { "phase-$phaseNum/slice-$sliceNum" } else { "slice-$sliceNum" }
+    $commitMsg = "feat($scope): $sliceGoal"
+
+    Write-ManualSteps "commit" @(
+        "Read slice $sliceNum goal from the plan"
+        "Run: git add -A"
+        "Run: git commit -m `"$commitMsg`""
+    )
+
+    if ($dryRun) {
+        Write-Host "[DRY RUN] Would commit with message:" -ForegroundColor Yellow
+        Write-Host "  $commitMsg" -ForegroundColor White
+        return
+    }
+
+    git add -A
+    git commit -m $commitMsg
+    Write-Host "COMMITTED  $commitMsg" -ForegroundColor Green
+}
+
+# ─── Command: phase-status ─────────────────────────────────────────────
+function Invoke-PhaseStatus {
+    if (-not $Arguments -or $Arguments.Count -lt 2) {
+        Write-Host "ERROR: Plan file and status required." -ForegroundColor Red
+        Write-Host "  Usage: pforge phase-status <plan-file> <status>" -ForegroundColor Yellow
+        Write-Host "  Status: planned | in-progress | complete | paused" -ForegroundColor Yellow
+        exit 1
+    }
+
+    $planFile = $Arguments[0]
+    $newStatus = $Arguments[1].ToLower()
+
+    $statusMap = @{
+        'planned'     = '📋 Planned'
+        'in-progress' = '🚧 In Progress'
+        'complete'    = '✅ Complete'
+        'paused'      = '⏸️ Paused'
+    }
+
+    if (-not $statusMap.ContainsKey($newStatus)) {
+        Write-Host "ERROR: Invalid status '$newStatus'. Use: planned, in-progress, complete, paused" -ForegroundColor Red
+        exit 1
+    }
+
+    $statusText = $statusMap[$newStatus]
+
+    # Find the plan's filename to match in roadmap
+    $planBaseName = [System.IO.Path]::GetFileName($planFile)
+
+    $roadmap = Join-Path $RepoRoot "docs/plans/DEPLOYMENT-ROADMAP.md"
+    if (-not (Test-Path $roadmap)) {
+        Write-Host "ERROR: DEPLOYMENT-ROADMAP.md not found." -ForegroundColor Red
+        exit 1
+    }
+
+    Write-ManualSteps "phase-status" @(
+        "Open docs/plans/DEPLOYMENT-ROADMAP.md"
+        "Find the phase entry for $planBaseName"
+        "Change **Status**: to $statusText"
+    )
+
+    $content = Get-Content $roadmap -Raw
+    # Match the status line following the plan link
+    $pattern = "(\*\*Plan\*\*:\s*\[$planBaseName\][^\n]*\n\*\*Status\*\*:\s*).+"
+    if ($content -match $pattern) {
+        $content = $content -replace $pattern, "`${1}$statusText"
+        Set-Content -Path $roadmap -Value $content -NoNewline
+        Write-Host "UPDATED  $planBaseName → $statusText" -ForegroundColor Green
+    }
+    else {
+        Write-Host "WARN: Could not find status line for $planBaseName in roadmap. Update manually." -ForegroundColor Yellow
+    }
+}
+
 # ─── Command: ext ──────────────────────────────────────────────────────
 function Invoke-Ext {
     if (-not $Arguments -or $Arguments.Count -eq 0) {
@@ -517,15 +631,17 @@ function Invoke-ExtRemove([string[]]$args_) {
 
 # ─── Command Router ────────────────────────────────────────────────────
 switch ($Command) {
-    'init'      { Invoke-Init }
-    'check'     { Invoke-Check }
-    'status'    { Invoke-Status }
-    'new-phase' { Invoke-NewPhase }
-    'branch'    { Invoke-Branch }
-    'ext'       { Invoke-Ext }
-    'help'      { Show-Help }
-    ''          { Show-Help }
-    '--help'    { Show-Help }
+    'init'         { Invoke-Init }
+    'check'        { Invoke-Check }
+    'status'       { Invoke-Status }
+    'new-phase'    { Invoke-NewPhase }
+    'branch'       { Invoke-Branch }
+    'commit'       { Invoke-Commit }
+    'phase-status' { Invoke-PhaseStatus }
+    'ext'          { Invoke-Ext }
+    'help'         { Show-Help }
+    ''             { Show-Help }
+    '--help'       { Show-Help }
     default {
         Write-Host "ERROR: Unknown command '$Command'" -ForegroundColor Red
         Show-Help

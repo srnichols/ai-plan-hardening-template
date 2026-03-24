@@ -21,6 +21,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 - **5 New Skills** — `/dependency-audit`, `/code-review`, `/release-notes`, `/api-doc-gen`, `/onboarding` (8 total per preset)
 - **2 New Shared Agents** — `dependency-reviewer.agent.md` (supply chain security) and `compliance-reviewer.agent.md` (GDPR/CCPA/SOC2)
 - **Agents vs Skills explainer** — README now explains the difference with comparison table
+- **Auto-format hook** — PostToolUse auto-runs project formatter (dotnet format, prettier, ruff, gofmt) after every file edit
+- **`pforge commit`** — auto-generates conventional commit messages from slice goals
+- **`pforge phase-status`** — updates roadmap status icons without manual editing
+- **Setup wizard asks for build/test/lint commands** — eliminates placeholder editing step
 - **Agent Plugin Packaging** — `plugin.json` at repo root for `Chat: Install Plugin From Source` installation
 - **VS Code Checkpoints** — added as Option 0 in Rollback Protocol for beginners
 - **CHANGELOG** — version history

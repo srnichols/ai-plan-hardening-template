@@ -86,13 +86,20 @@ replace_placeholders() {
     [[ ! -f "$file" ]] && return
 
     if [[ "$(uname)" == "Darwin" ]]; then
-        # macOS sed requires '' after -i
         sed -i '' "s|<YOUR PROJECT NAME>|${name}|g" "$file"
         sed -i '' "s|<YOUR TECH STACK>|${stack}|g" "$file"
+        sed -i '' "s|<YOUR BUILD COMMAND>|${BUILD_CMD}|g" "$file"
+        sed -i '' "s|<YOUR TEST COMMAND>|${TEST_CMD}|g" "$file"
+        sed -i '' "s|<YOUR LINT COMMAND>|${LINT_CMD}|g" "$file"
+        sed -i '' "s|<YOUR DEV COMMAND>||g" "$file"
         sed -i '' "s|<DATE>|${today}|g" "$file"
     else
         sed -i "s|<YOUR PROJECT NAME>|${name}|g" "$file"
         sed -i "s|<YOUR TECH STACK>|${stack}|g" "$file"
+        sed -i "s|<YOUR BUILD COMMAND>|${BUILD_CMD}|g" "$file"
+        sed -i "s|<YOUR TEST COMMAND>|${TEST_CMD}|g" "$file"
+        sed -i "s|<YOUR LINT COMMAND>|${LINT_CMD}|g" "$file"
+        sed -i "s|<YOUR DEV COMMAND>||g" "$file"
         sed -i "s|<DATE>|${today}|g" "$file"
     fi
 }
@@ -227,12 +234,37 @@ case "$PRESET" in
     *)          red "Unknown preset: $PRESET"; exit 1 ;;
 esac
 
+# ─── Build/Test/Lint Commands ──────────────────────────────────────────
+case "$PRESET" in
+    dotnet)     DEFAULT_BUILD="dotnet build"; DEFAULT_TEST="dotnet test"; DEFAULT_LINT="dotnet format --verify-no-changes" ;;
+    typescript) DEFAULT_BUILD="pnpm build"; DEFAULT_TEST="pnpm test"; DEFAULT_LINT="pnpm lint" ;;
+    python)     DEFAULT_BUILD="python -m build"; DEFAULT_TEST="pytest"; DEFAULT_LINT="ruff check ." ;;
+    java)       DEFAULT_BUILD="./gradlew build"; DEFAULT_TEST="./gradlew test"; DEFAULT_LINT="./gradlew spotlessCheck" ;;
+    go)         DEFAULT_BUILD="go build ./..."; DEFAULT_TEST="go test ./..."; DEFAULT_LINT="golangci-lint run" ;;
+    custom)     DEFAULT_BUILD=""; DEFAULT_TEST=""; DEFAULT_LINT="" ;;
+esac
+
+if [[ "$FORCE" != true ]]; then
+    echo ""
+    cyan "Build/Test/Lint commands (press Enter for defaults):"
+    BUILD_CMD="$(prompt_value "Build command" "$DEFAULT_BUILD")"
+    TEST_CMD="$(prompt_value "Test command" "$DEFAULT_TEST")"
+    LINT_CMD="$(prompt_value "Lint command" "$DEFAULT_LINT")"
+else
+    BUILD_CMD="$DEFAULT_BUILD"
+    TEST_CMD="$DEFAULT_TEST"
+    LINT_CMD="$DEFAULT_LINT"
+fi
+
 # ─── Summary ───────────────────────────────────────────────────────────
 echo ""
 cyan "Configuration:"
 echo "  Project:  $PROJECT_NAME"
 echo "  Path:     $PROJECT_PATH"
 echo "  Preset:   $PRESET ($STACK_LABEL)"
+echo "  Build:    $BUILD_CMD"
+echo "  Test:     $TEST_CMD"
+echo "  Lint:     $LINT_CMD"
 echo "  Force:    $FORCE"
 echo ""
 

@@ -162,6 +162,65 @@ If no branch strategy is declared or the plan uses "trunk," no branch is created
 
 ---
 
+### `pforge commit <plan-file> <slice-number>`
+
+Stage all changes and commit with a conventional commit message derived from the slice's goal.
+
+```powershell
+# PowerShell — preview
+.\pforge.ps1 commit docs/plans/Phase-3-USER-AUTH-PLAN.md 2 --dry-run
+
+# Commit
+.\pforge.ps1 commit docs/plans/Phase-3-USER-AUTH-PLAN.md 2
+```
+
+```bash
+# Bash
+./pforge.sh commit docs/plans/Phase-3-USER-AUTH-PLAN.md 2 --dry-run
+./pforge.sh commit docs/plans/Phase-3-USER-AUTH-PLAN.md 2
+```
+
+**What it does:**
+1. Reads the plan file to find Slice 2's goal text
+2. Generates a conventional commit message: `feat(phase-3/slice-2): implement UserProfileRepository`
+3. Runs `git add -A` then `git commit -m "..."`
+
+**Equivalent manual steps:**
+1. Read the slice goal from your plan
+2. Run `git add -A`
+3. Run `git commit -m "feat(phase-N/slice-K): <goal>"`
+
+---
+
+### `pforge phase-status <plan-file> <status>`
+
+Update a phase's status in the deployment roadmap.
+
+```powershell
+# PowerShell
+.\pforge.ps1 phase-status docs/plans/Phase-3-USER-AUTH-PLAN.md in-progress
+.\pforge.ps1 phase-status docs/plans/Phase-3-USER-AUTH-PLAN.md complete
+```
+
+```bash
+# Bash
+./pforge.sh phase-status docs/plans/Phase-3-USER-AUTH-PLAN.md in-progress
+./pforge.sh phase-status docs/plans/Phase-3-USER-AUTH-PLAN.md complete
+```
+
+**Valid statuses:** `planned`, `in-progress`, `complete`, `paused`
+
+**What it does:**
+1. Finds the phase entry in `DEPLOYMENT-ROADMAP.md` by matching the plan filename
+2. Updates the `**Status**:` line to the corresponding icon (📋, 🚧, ✅, ⏸️)
+
+**Equivalent manual steps:**
+1. Open `docs/plans/DEPLOYMENT-ROADMAP.md`
+2. Find the phase entry
+3. Change `**Status**:` to the new status icon
+
+---
+
 ### `pforge ext install <path>`
 
 Install an extension from a local path.
@@ -262,6 +321,8 @@ Show all available commands.
 | See phase status | `pforge status` | Open `DEPLOYMENT-ROADMAP.md` |
 | Start new phase | `pforge new-phase <name>` | Create plan file, edit roadmap |
 | Create branch | `pforge branch <plan>` | Read plan, run `git checkout -b` |
+| Commit a slice | `pforge commit <plan> <N>` | Read slice goal, run `git add -A && git commit -m "..."` |
+| Update phase status | `pforge phase-status <plan> <status>` | Edit DEPLOYMENT-ROADMAP.md manually |
 | Install extension | `pforge ext install <path>` | Copy files to 3 directories |
 | Harden a plan | *(use prompt)* | Paste Step 2 prompt into Copilot |
 | Execute slices | *(use prompt)* | Paste Step 3 prompt into Copilot |
@@ -349,10 +410,13 @@ When setting up a new feature for a user:
 ```
 1. pforge check                          # Verify setup is valid
 2. pforge new-phase <feature-name>       # Create plan file + roadmap entry
-3. pforge branch <plan-file> --dry-run   # Show what branch would be created
-4. (ask user to confirm branch name)
-5. pforge branch <plan-file>             # Create the branch
-6. (proceed with Step 1-5 pipeline prompts in Agent Mode)
+3. pforge phase-status <plan-file> in-progress  # Mark phase as active
+4. pforge branch <plan-file> --dry-run   # Show what branch would be created
+5. (ask user to confirm branch name)
+6. pforge branch <plan-file>             # Create the branch
+7. (proceed with Step 1-5 pipeline prompts in Agent Mode)
+8. pforge commit <plan-file> <N>         # Commit after each slice passes
+9. pforge phase-status <plan-file> complete    # Mark phase done when finished
 ```
 
 ### Parsing Output

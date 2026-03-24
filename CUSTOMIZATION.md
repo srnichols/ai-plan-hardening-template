@@ -523,6 +523,8 @@ pforge check             Validate setup (delegates to validate-setup.ps1/sh)
 pforge status            Show phase status from DEPLOYMENT-ROADMAP.md
 pforge new-phase <name>  Create plan file + add to roadmap
 pforge branch <plan>     Create branch from plan's Branch Strategy
+pforge commit <plan> <N> Commit with conventional message from slice goal
+pforge phase-status <plan> <status>  Update roadmap (planned|in-progress|complete|paused)
 pforge ext install <p>   Install an extension
 pforge ext list          List installed extensions
 pforge ext remove <name> Remove an extension

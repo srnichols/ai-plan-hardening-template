@@ -86,6 +86,10 @@ function Update-Placeholders([string]$FilePath, [string]$Name, [string]$Stack) {
     $content = Get-Content $FilePath -Raw
     $content = $content -replace '<YOUR PROJECT NAME>', $Name
     $content = $content -replace '<YOUR TECH STACK>', $Stack
+    $content = $content -replace '<YOUR BUILD COMMAND>', $BuildCmd
+    $content = $content -replace '<YOUR TEST COMMAND>', $TestCmd
+    $content = $content -replace '<YOUR LINT COMMAND>', $LintCmd
+    $content = $content -replace '<YOUR DEV COMMAND>', ''
     $content = $content -replace '<DATE>', (Get-Date -Format 'yyyy-MM-dd')
     Set-Content -Path $FilePath -Value $content -NoNewline
 }
@@ -219,12 +223,54 @@ $stackLabel = switch ($Preset) {
     'custom'     { 'Custom (configure manually)' }
 }
 
+# ─── Build/Test/Lint Commands ──────────────────────────────────────────
+$defaultBuild = switch ($Preset) {
+    'dotnet'     { 'dotnet build' }
+    'typescript' { 'pnpm build' }
+    'python'     { 'python -m build' }
+    'java'       { './gradlew build' }
+    'go'         { 'go build ./...' }
+    'custom'     { '' }
+}
+$defaultTest = switch ($Preset) {
+    'dotnet'     { 'dotnet test' }
+    'typescript' { 'pnpm test' }
+    'python'     { 'pytest' }
+    'java'       { './gradlew test' }
+    'go'         { 'go test ./...' }
+    'custom'     { '' }
+}
+$defaultLint = switch ($Preset) {
+    'dotnet'     { 'dotnet format --verify-no-changes' }
+    'typescript' { 'pnpm lint' }
+    'python'     { 'ruff check .' }
+    'java'       { './gradlew spotlessCheck' }
+    'go'         { 'golangci-lint run' }
+    'custom'     { '' }
+}
+
+if (-not $Force) {
+    Write-Host ""
+    Write-Host "Build/Test/Lint commands (press Enter for defaults):" -ForegroundColor Cyan
+    $BuildCmd = Get-PromptValue "Build command" $defaultBuild
+    $TestCmd  = Get-PromptValue "Test command" $defaultTest
+    $LintCmd  = Get-PromptValue "Lint command" $defaultLint
+}
+else {
+    $BuildCmd = $defaultBuild
+    $TestCmd  = $defaultTest
+    $LintCmd  = $defaultLint
+}
+
 # ─── Summary ───────────────────────────────────────────────────────────
 Write-Host ""
 Write-Host "Configuration:" -ForegroundColor Cyan
 Write-Host "  Project:  $ProjectName"
 Write-Host "  Path:     $ProjectPath"
 Write-Host "  Preset:   $Preset ($stackLabel)"
+Write-Host "  Build:    $BuildCmd"
+Write-Host "  Test:     $TestCmd"
+Write-Host "  Lint:     $LintCmd"
 Write-Host "  Force:    $Force"
 Write-Host ""
 
