@@ -47,6 +47,8 @@ graph TD
 
 > **You don't need to understand all of this upfront.** Run the setup wizard, follow the numbered step prompts, and the framework guides you through.
 
+> **AI Agents**: If you're an AI coding agent installing this framework, skip to [AGENT-SETUP.md](AGENT-SETUP.md).
+
 ---
 
 ## The Problem
