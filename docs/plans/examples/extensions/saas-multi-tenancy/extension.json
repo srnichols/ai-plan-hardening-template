@@ -1,0 +1,20 @@
+{
+  "name": "saas-multi-tenancy",
+  "version": "1.0.0",
+  "description": "Multi-tenant isolation guardrails — middleware patterns, RLS policies, tenant-scoped caching, cross-tenant prevention. For SaaS platforms using row-level security with any database.",
+  "author": "plan-forge-community",
+  "minTemplateVersion": "1.2.0",
+  "files": {
+    "instructions": [
+      "multi-tenancy.instructions.md",
+      "rls-patterns.instructions.md"
+    ],
+    "agents": [
+      "tenant-isolation-reviewer.agent.md"
+    ],
+    "prompts": [
+      "new-tenant-middleware.prompt.md",
+      "new-rls-policy.prompt.md"
+    ]
+  }
+}
