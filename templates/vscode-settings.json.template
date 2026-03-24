@@ -1,6 +1,6 @@
 {
     // ─── GitHub Copilot Settings ───────────────────────────────────────
-    // Recommended VS Code settings for the AI Plan Hardening Pipeline.
+    // Recommended VS Code settings for the Plan Forge Pipeline.
     // Copy this file to .vscode/settings.json in your project root.
 
     // Enable Copilot Chat agent mode (required for execution pipeline)

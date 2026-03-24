@@ -48,6 +48,6 @@
 
 ## Notes
 
-- Each phase goes through the [AI Plan Hardening Pipeline](./AI-Plan-Hardening-Runbook-Instructions.md) before execution
+- Each phase goes through the [Plan Forge Pipeline](./AI-Plan-Hardening-Runbook-Instructions.md) before execution
 - Phase plans are stored in this directory (`docs/plans/`)
 - Guardrail files are updated after each phase completion (Step 5 of the pipeline)

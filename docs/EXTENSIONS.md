@@ -6,7 +6,7 @@
 ## Overview
 
 An extension is a folder containing guardrail files that can be
-installed into any project using the AI Plan Hardening Pipeline.
+installed into any project using the Plan Forge Pipeline.
 No runtime, no dependencies, no build step — just folders you copy.
 
 ## Structure

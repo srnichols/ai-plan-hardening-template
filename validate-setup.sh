@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# AI Plan Hardening — Setup Validator (Bash)
+# Plan Forge — Setup Validator (Bash)
 #
 # Usage:
 #   ./validate-setup.sh --path ~/projects/MyApp
@@ -83,7 +83,7 @@ check_no_placeholders() {
 # ─── Banner ────────────────────────────────────────────────────────────
 echo ""
 cyan "╔══════════════════════════════════════════════════════════════╗"
-cyan "║       AI Plan Hardening — Setup Validator                   ║"
+cyan "║       Plan Forge — Setup Validator                   ║"
 cyan "╚══════════════════════════════════════════════════════════════╝"
 echo ""
 cyan "Validating: $PROJECT_PATH"

@@ -1,4 +1,4 @@
-# AI Plan Hardening Template
+# Plan Forge
 
 > **A repeatable framework for converting rough ideas into drift-proof execution contracts that AI coding agents follow without scope creep.**
 
@@ -155,7 +155,7 @@ Before you begin, make sure you have:
 Click **"Use this template"** on GitHub, or clone and run the setup wizard:
 
 ```bash
-git clone https://github.com/srnichols/ai-plan-hardening-template.git my-project-plans
+git clone https://github.com/srnichols/plan-forge.git my-project-plans
 cd my-project-plans
 ```
 
@@ -336,7 +336,7 @@ Once the framework is installed, here's how you use it day-to-day for any new fe
 > **Copy-paste this into your AI agent** whenever you have a new feature to build:
 
 ```
-I need to build a new feature using the AI Plan Hardening Pipeline.
+I need to build a new feature using the Plan Forge Pipeline.
 
 1. Read docs/plans/AI-Plan-Hardening-Runbook-Instructions.md for the full workflow
 2. Read docs/plans/DEPLOYMENT-ROADMAP.md for current project status
@@ -382,7 +382,7 @@ Both approaches produce identical results — agents just make session transitio
 ## Repo Structure
 
 ```
-ai-plan-hardening-template/
+plan-forge/
 ├── README.md                          ← You are here
 ├── AGENT-SETUP.md                     ← AI agent entry point (autonomous setup)
 ├── LICENSE
@@ -574,7 +574,7 @@ See [docs/COPILOT-VSCODE-GUIDE.md](docs/COPILOT-VSCODE-GUIDE.md) for more troubl
 Copy-paste this prompt into your AI coding agent to install the framework:
 
 ```
-Read the AI Plan Hardening Template repo at https://github.com/srnichols/ai-plan-hardening-template
+Read the Plan Forge repo at https://github.com/srnichols/plan-forge
 
 1. Read AGENT-SETUP.md for the full setup instructions
 2. Auto-detect my project's tech stack from its marker files (e.g. .csproj, package.json, pyproject.toml, go.mod, pom.xml)

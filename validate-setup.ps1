@@ -68,7 +68,7 @@ function Check-NoPlaceholders([string]$RelPath) {
 # ─── Banner ────────────────────────────────────────────────────────────
 Write-Host ""
 Write-Host "╔══════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-Write-Host "║       AI Plan Hardening — Setup Validator                   ║" -ForegroundColor Cyan
+Write-Host "║       Plan Forge — Setup Validator                   ║" -ForegroundColor Cyan
 Write-Host "╚══════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Validating: $ProjectPath" -ForegroundColor Cyan

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# AI Plan Hardening Template — Project Setup Wizard (Bash)
+# Plan Forge — Project Setup Wizard (Bash)
 #
 # Usage:
 #   ./setup.sh --preset dotnet --path ~/projects/MyApp --name MyApp
@@ -142,7 +142,7 @@ detect_preset() {
 # ─── Banner ────────────────────────────────────────────────────────────
 echo ""
 cyan "╔══════════════════════════════════════════════════════════════╗"
-cyan "║       AI Plan Hardening — Project Setup Wizard              ║"
+cyan "║       Plan Forge — Project Setup Wizard              ║"
 cyan "║       Bootstraps planning pipeline + tech instructions      ║"
 cyan "╚══════════════════════════════════════════════════════════════╝"
 echo ""

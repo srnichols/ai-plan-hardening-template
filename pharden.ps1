@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    pharden — CLI wrapper for the AI Plan Hardening Pipeline
+    pharden — CLI wrapper for the Plan Forge Pipeline
 
 .DESCRIPTION
     Convenience commands for common pipeline operations. Every command
@@ -54,7 +54,7 @@ function Write-ManualSteps([string]$Title, [string[]]$Steps) {
 
 function Show-Help {
     Write-Host ""
-    Write-Host "pharden — AI Plan Hardening Pipeline CLI" -ForegroundColor Cyan
+    Write-Host "pharden — Plan Forge Pipeline CLI" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "COMMANDS:" -ForegroundColor Yellow
     Write-Host "  init              Bootstrap project with setup wizard (delegates to setup.ps1)"

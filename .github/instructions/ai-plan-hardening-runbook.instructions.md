@@ -4,7 +4,7 @@ applyTo: 'docs/plans/**'
 priority: HIGH
 ---
 
-# AI Plan Hardening — Quick Reference
+# Plan Forge — Quick Reference
 
 > **Full Runbook**: [AI-Plan-Hardening-Runbook.md](../../docs/plans/AI-Plan-Hardening-Runbook.md)  
 > **Step-by-Step**: [AI-Plan-Hardening-Runbook-Instructions.md](../../docs/plans/AI-Plan-Hardening-Runbook-Instructions.md)

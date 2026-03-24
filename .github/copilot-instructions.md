@@ -77,7 +77,7 @@
 
 ## Planning & Execution
 
-This project uses the **AI Plan Hardening Pipeline** for feature development.
+This project uses the **Plan Forge Pipeline** for feature development.
 
 - **Runbook**: `docs/plans/AI-Plan-Hardening-Runbook.md`
 - **Instructions**: `docs/plans/AI-Plan-Hardening-Runbook-Instructions.md`

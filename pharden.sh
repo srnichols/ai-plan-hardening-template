@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# pharden — CLI wrapper for the AI Plan Hardening Pipeline
+# pharden — CLI wrapper for the Plan Forge Pipeline
 # Convenience commands for common pipeline operations.
 # Every command shows the equivalent manual steps.
 
@@ -38,7 +38,7 @@ print_manual_steps() {
 show_help() {
     cat <<'EOF'
 
-pharden — AI Plan Hardening Pipeline CLI
+pharden — Plan Forge Pipeline CLI
 
 COMMANDS:
   init              Bootstrap project with setup wizard (delegates to setup.sh)

@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    AI Plan Hardening Template — Project Setup Wizard
+    Plan Forge — Project Setup Wizard
 
 .DESCRIPTION
     Interactive script that bootstraps a project with the AI Plan Hardening
@@ -47,7 +47,7 @@ $templateRoot = $PSScriptRoot
 function Write-Banner {
     Write-Host ""
     Write-Host "╔══════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-    Write-Host "║       AI Plan Hardening — Project Setup Wizard              ║" -ForegroundColor Cyan
+    Write-Host "║       Plan Forge — Project Setup Wizard              ║" -ForegroundColor Cyan
     Write-Host "║       Bootstraps planning pipeline + tech instructions      ║" -ForegroundColor Cyan
     Write-Host "╚══════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
     Write-Host ""
