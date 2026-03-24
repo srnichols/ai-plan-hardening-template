@@ -378,7 +378,8 @@ Write-Host "  6. Review .github/skills/ — update build/deploy commands for you
 Write-Host "  7. Review docs/plans/DEPLOYMENT-ROADMAP.md — add your phases"
 Write-Host "  8. Read docs/COPILOT-VSCODE-GUIDE.md for Copilot Agent Mode workflow"
 Write-Host "  9. Start planning: open docs/plans/AI-Plan-Hardening-Runbook-Instructions.md"
-Write-Host "  4. Review docs/plans/DEPLOYMENT-ROADMAP.md — add your phases"
-Write-Host "  5. Read docs/COPILOT-VSCODE-GUIDE.md for Copilot Agent Mode workflow"
-Write-Host "  6. Start planning: open docs/plans/AI-Plan-Hardening-Runbook-Instructions.md"
+Write-Host ""
+Write-Host "Optional (recommended):" -ForegroundColor Yellow
+Write-Host "  - Run .github/prompts/project-profile.prompt.md to generate project-specific guardrails"
+Write-Host "  - Use .github/prompts/step0-specify-feature.prompt.md to define your first feature"
 Write-Host ""

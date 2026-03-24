@@ -9,7 +9,67 @@
 
 The setup wizard copies preset files and generates your project-specific configuration. Here's what to customize next:
 
-### 1. Update `.github/copilot-instructions.md`
+### 1. Generate a Project Profile (Recommended)
+
+Run the **Project Profile** prompt to customize guardrails for your project:
+
+1. Open VS Code → Copilot Chat → Agent Mode
+2. Use the prompt: `.github/prompts/project-profile.prompt.md`
+3. Answer the interview questions about your project's quality standards
+4. The prompt generates `.github/instructions/project-profile.instructions.md`
+
+This creates **project-specific** quality standards that supplement the universal baseline.
+
+#### Two-Layer Guardrail Model
+
+```mermaid
+graph TB
+    subgraph "Layer 1 — Universal Baseline  (ships with preset)"
+        L1["Architecture principles · Security · Testing · Error handling<br/>Type safety · Async patterns · API conventions<br/><b>Every project gets these automatically</b>"]
+    end
+    subgraph "Layer 2 — Project Profile  (generated per-project)"
+        L2["Coverage targets · Latency SLAs · Compliance requirements<br/>Domain rules · Architecture overrides<br/><b>You customize these to match YOUR project</b>"]
+    end
+
+    L1 -->|"supplemented by"| L2
+
+    style L1 fill:#4A90D9,stroke:#2C5F8A,color:#fff
+    style L2 fill:#7B68EE,stroke:#5A4CB5,color:#fff
+```
+
+**Layer 1** ensures every project gets industry-standard guardrails — teams that don't know what to ask still get type safety, error handling, security basics, and architectural separation.
+
+**Layer 2** lets experienced teams dial in project-specific constraints — a fintech API might require SOC2 compliance and P95 < 200ms, while a marketing site needs WCAG AA accessibility.
+
+**Load order** (every agent session):
+1. `.github/copilot-instructions.md` — Project overview (always loaded)
+2. `architecture-principles.instructions.md` — Universal baseline (Layer 1)
+3. `project-profile.instructions.md` — Project-specific (Layer 2, if present)
+4. Domain-specific `*.instructions.md` — Per-file-type (existing behavior)
+
+**If Layer 2 conflicts with Layer 1**: The project profile wins for that specific project. Example: Layer 1 says "TDD for business logic" → Layer 2 says "TDD for ALL code" → Layer 2 applies.
+
+#### Customization Flow
+
+```mermaid
+flowchart LR
+    A["Run Setup Wizard<br/><code>setup.ps1</code>"] --> B["Get Universal Baseline<br/><i>15 instruction files</i>"]
+    B --> C["Run Project Profile Prompt<br/><i>optional, recommended</i>"]
+    C --> D["Answer Interview<br/><i>testing, performance,<br/>security, domain rules</i>"]
+    D --> E["Generated:<br/><code>project-profile.instructions.md</code>"]
+    E --> F["AI loads BOTH layers<br/>every session"]
+
+    style A fill:#D1ECF1,stroke:#0C5460,color:#333
+    style B fill:#4A90D9,stroke:#2C5F8A,color:#fff
+    style C fill:#FFF3CD,stroke:#C9A800,color:#333
+    style D fill:#FFF3CD,stroke:#C9A800,color:#333
+    style E fill:#7B68EE,stroke:#5A4CB5,color:#fff
+    style F fill:#D4EDDA,stroke:#155724,color:#333
+```
+
+> **Skip this step** if the universal baseline is sufficient for your project. You can always run the profile prompt later.
+
+### 2. Update `.github/copilot-instructions.md`
 
 The wizard generates a starter file. Customize it with:
 
@@ -19,7 +79,7 @@ The wizard generates a starter file. Customize it with:
 - **Domain-specific rules**: Business logic conventions, data models
 - **Common patterns**: Code examples your team uses repeatedly
 
-### 2. Add Domain-Specific Instruction Files
+### 3. Add Domain-Specific Instruction Files
 
 The presets include 15 instruction files (16 for TypeScript, which adds `frontend.instructions.md`). Add your own for project-specific domains:
 

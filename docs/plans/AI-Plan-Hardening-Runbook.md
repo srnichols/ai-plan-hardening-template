@@ -40,6 +40,10 @@ Every feature starts as a phase in the master roadmap and flows through a struct
 ### Development Workflow
 
 ```
+0. SPECIFY (optional, recommended)
+   Define WHAT you want and WHY. Surface unknowns as [NEEDS CLARIFICATION] markers.
+   Use .github/prompts/step0-specify-feature.prompt.md
+
 1. PLAN MODE (human + AI)
    Talk through what needs to be done; refine the idea collaboratively.
 

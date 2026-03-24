@@ -14,10 +14,13 @@ priority: HIGH
 
 ## Workflow Overview
 
-The pipeline has **5 steps** using **3 separate agent sessions**. Each session is isolated to prevent context bleed.
+The pipeline has **6 steps** (Step 0–5) using **3 separate agent sessions**. Each session is isolated to prevent context bleed.
 
 ```
 ┌───────────────────────────────────────────────────────────────────┐
+│  STEP 0 — Specify (optional, recommended)                         │
+│  Define WHAT and WHY before any technical planning                 │
+├───────────────────────────────────────────────────────────────────┤
 │  SESSION 1 — Plan Hardening                                       │
 │  Step 1: Pre-flight checks (agent — automated)                    │
 │  Step 2: Harden the plan + resolve TBDs (agent)                   │
@@ -32,6 +35,8 @@ The pipeline has **5 steps** using **3 separate agent sessions**. Each session i
 ```
 
 > **Why separate sessions?** The executor shouldn't self-audit. Fresh context eliminates blind spots.
+>
+> **Pipeline prompts**: Each step is also available as a prompt template in `.github/prompts/step<N>-*.prompt.md` — browse the file picker for a self-documenting workflow.
 
 ---
 
@@ -46,9 +51,41 @@ The pipeline has **5 steps** using **3 separate agent sessions**. Each session i
 
 ---
 
+## Step 0: Specify Feature (Optional)
+
+Before writing a plan, use this step to define *what* you're building and *why*. This is especially valuable for teams that are new to structured planning or when requirements are unclear.
+
+> **Prompt template**: `.github/prompts/step0-specify-feature.prompt.md`
+
+Open a new agent session and use the Step 0 prompt template. It walks you through:
+
+1. **Problem Statement** — What problem does this solve? Who has it?
+2. **User Scenarios** — Concrete step-by-step usage examples
+3. **Acceptance Criteria** — Measurable "done" criteria
+4. **Edge Cases** — What could go wrong?
+5. **Out of Scope** — What this feature does NOT do
+6. **Open Questions** — Unknowns tagged with `[NEEDS CLARIFICATION]`
+
+The output is a specification block you paste into your Phase Plan as front matter.
+
+### `[NEEDS CLARIFICATION]` Markers
+
+Any uncertainty in the spec gets tagged:
+```
+[NEEDS CLARIFICATION: describe what's unclear]
+```
+
+These markers are **blocking** — Step 2 (Harden the Plan) will refuse to proceed if any remain unresolved. This prevents ambiguity from leaking into execution.
+
+> **Skip this step** if you already have clear, well-defined requirements.
+
+---
+
 ## Step 1: Pre-flight Checks
 
 Open a **new agent session** (Copilot Chat → Agent Mode).
+
+> **Prompt template**: `.github/prompts/step1-preflight-check.prompt.md`
 
 Replace `<YOUR-PLAN>` with your plan filename, then copy the entire block.
 
@@ -114,6 +151,8 @@ If ANY fail: "Pre-flight FAILED ❌" + list exactly what to fix.
 
 Open a **new agent session**. Replace `<YOUR-PLAN>` with your plan filename.
 
+> **Prompt template**: `.github/prompts/step2-harden-plan.prompt.md`
+
 ### Hardening Prompt (Copy-Paste)
 
 ```text
@@ -164,6 +203,8 @@ If ANY need input: list them and WAIT.
 
 Open a **new agent session** (separate from hardening).
 
+> **Prompt template**: `.github/prompts/step3-execute-slice.prompt.md`
+
 ### Execution Prompt (Copy-Paste)
 
 ```text
@@ -210,6 +251,8 @@ Follow the **Rollback Protocol** (Runbook Section 10):
 
 After all slices pass, before the Reviewer Gate.
 
+> **Prompt template**: `.github/prompts/step4-completeness-sweep.prompt.md`
+
 ### Completeness Sweep Prompt (Copy-Paste)
 
 ```text
@@ -247,6 +290,8 @@ If ANY finding cannot be resolved without scope expansion: STOP and report.
 ## Step 5: Review & Audit Gate
 
 Open a **fresh agent session** (not the execution session).
+
+> **Prompt template**: `.github/prompts/step5-review-gate.prompt.md`
 
 ### Review & Audit Prompt (Copy-Paste)
 
@@ -325,15 +370,16 @@ Do NOT modify any files. Report only.
 
 ## Quick Reference: Which Prompt When?
 
-| Situation | Step | Prompt |
-|-----------|------|--------|
-| Verify prerequisites | Step 1 | Pre-flight Prompt |
-| Structure a new plan | Step 2 | Hardening Prompt |
-| Plan is hardened, ready to build | Step 3 | Execution Prompt |
-| All slices done, clean up | Step 4 | Completeness Sweep |
-| Independent quality audit | Step 5 | Review & Audit Prompt |
-| Gate failed mid-execution | — | Rollback Protocol (Section 10) |
-| Scope changed mid-execution | — | Amendment Protocol (Section 11) |
+| Situation | Step | Prompt | Template |
+|-----------|------|--------|----------|
+| Define what to build | Step 0 | Specify Prompt | `step0-specify-feature.prompt.md` |
+| Verify prerequisites | Step 1 | Pre-flight Prompt | `step1-preflight-check.prompt.md` |
+| Structure a new plan | Step 2 | Hardening Prompt | `step2-harden-plan.prompt.md` |
+| Plan is hardened, ready to build | Step 3 | Execution Prompt | `step3-execute-slice.prompt.md` |
+| All slices done, clean up | Step 4 | Completeness Sweep | `step4-completeness-sweep.prompt.md` |
+| Independent quality audit | Step 5 | Review & Audit Prompt | `step5-review-gate.prompt.md` |
+| Gate failed mid-execution | — | Rollback Protocol (Section 10) | — |
+| Scope changed mid-execution | — | Amendment Protocol (Section 11) | — |
 
 ---
 

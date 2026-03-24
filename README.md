@@ -6,60 +6,128 @@
 
 ---
 
-### AI Agents: Autonomous Setup
+## What Is This? (Plain English)
 
-> **If you are an AI coding agent** tasked with incorporating this framework into a project, read **[AGENT-SETUP.md](AGENT-SETUP.md)** — it has auto-detection rules, greenfield vs brownfield decision trees, exact non-interactive commands, merge strategies for existing guardrails, and a post-setup validator.
+When you use AI coding tools (like GitHub Copilot, Cursor, or Claude) to build software, they're great at writing code — but they tend to go off-script. They'll add features you didn't ask for, skip tests, make architecture decisions without telling you, and forget what they were doing halfway through.
 
-### Quick Start Prompt for AI Agents
+**This template fixes that.** It gives you:
 
-> **Copy-paste this prompt** into your AI coding agent (Copilot, Claude, Cursor, etc.) to install the framework into your project:
+- **A step-by-step workflow** that breaks big features into small, verifiable chunks
+- **Guardrails** — rule files that tell the AI *how* to write code (security practices, testing standards, architecture patterns) so you don't have to remember everything yourself
+- **An independent review step** where a fresh AI session checks the work for mistakes and scope creep
 
+Think of it like giving your AI assistant a checklist, a rulebook, and a supervisor — all at once.
+
+### How the Pieces Fit Together
+
+This template installs four types of files into your project. Each serves a different role:
+
+```mermaid
+graph TD
+    A["🧭 Pipeline Prompts<br/><i>step0 → step5</i>"] -->|guide the workflow| B["📋 Instruction Files<br/><i>*.instructions.md</i>"]
+    A -->|use during execution| C["🧩 Scaffolding Prompts<br/><i>new-entity, new-service...</i>"]
+    A -->|trigger for review| D["🔍 Agent Definitions<br/><i>*.agent.md</i>"]
+    B -->|loaded automatically<br/>based on file type| E["Your Code"]
+    C -->|generate consistent| E
+    D -->|audit and review| E
+
+    style A fill:#4A90D9,stroke:#2C5F8A,color:#fff
+    style B fill:#7B68EE,stroke:#5A4CB5,color:#fff
+    style C fill:#50C878,stroke:#3A9A5C,color:#fff
+    style D fill:#FF8C42,stroke:#CC6F35,color:#fff
+    style E fill:#F5F5F5,stroke:#999,color:#333
 ```
-Read the AI Plan Hardening Template repo at https://github.com/srnichols/ai-plan-hardening-template
 
-1. Read AGENT-SETUP.md for the full setup instructions
-2. Auto-detect my project's tech stack from its marker files (e.g. .csproj, package.json, pyproject.toml, go.mod, pom.xml)
-3. Clone the template repo to a temp directory
-4. Run the setup script against my project with the detected preset:
-   - PowerShell: .\setup.ps1 -Preset <detected> -ProjectPath "<my-project>" -ProjectName "<my-project-name>" -Force
-   - Bash: ./setup.sh --preset <detected> --path "<my-project>" --name "<my-project-name>" --force
-5. Replace all placeholders (<YOUR PROJECT NAME>, <YOUR TECH STACK>, <DATE>, build/test/lint commands) in the generated files with my actual project details
-6. Run the validation script to confirm setup is correct
-7. Clean up the cloned template repo
+| Piece | What It Is | Analogy |
+|-------|-----------|---------|
+| **Pipeline Prompts** | Step-by-step workflow templates (Step 0–5) | The recipe — tells you what to do and in what order |
+| **Instruction Files** | Rules that auto-load when editing specific file types | The rulebook — coding standards, security, testing, architecture |
+| **Scaffolding Prompts** | Templates for generating common code patterns | Cookie cutters — consistent entities, services, controllers, tests |
+| **Agent Definitions** | Specialized AI reviewer personas (security, architecture, etc.) | Expert reviewers — each focuses on one thing and checks it deeply |
 
-After setup, explain what was installed and how to start using the planning pipeline.
-```
+> **You don't need to understand all of this upfront.** Run the setup wizard, follow the numbered step prompts, and the framework guides you through.
 
 ---
 
 ## The Problem
 
 AI coding agents (Copilot, Cursor, Claude, etc.) are powerful but drift-prone. Without guardrails, they:
-- Silently expand scope ("I'll also add...")
-- Make architectural decisions that weren't discussed
-- Skip validation and ship broken code
-- Lose context in long sessions
+- **Silently expand scope** — "I'll also add..." (you didn't ask for that)
+- **Make undiscussed decisions** — picks a database pattern without telling you
+- **Skip validation** — ships code that doesn't build or pass tests
+- **Lose context** — forgets requirements halfway through long sessions
+
+These problems get worse the less technical your team is — you may not even notice the drift until it's too late.
 
 ## The Solution
 
-A **5-step pipeline** with **3 isolated agent sessions** that converts rough plans into bounded execution contracts:
+A **6-step pipeline** (Step 0–5) with **3 isolated agent sessions** that converts rough ideas into bounded execution contracts:
 
+```mermaid
+flowchart LR
+    S0["Step 0<br/>Specify<br/><i>what & why</i>"] --> S1["Step 1<br/>Pre-flight<br/><i>verify setup</i>"]
+    S1 --> S2["Step 2<br/>Harden<br/><i>scope contract</i>"]
+    S2 --> S3["Step 3<br/>Execute<br/><i>slice by slice</i>"]
+    S3 --> S4["Step 4<br/>Sweep<br/><i>no TODOs left</i>"]
+    S4 --> S5["Step 5<br/>Review<br/><i>drift detection</i>"]
+
+    subgraph Optional
+        S0
+    end
+    subgraph "Session 1 — Plan"
+        S1
+        S2
+    end
+    subgraph "Session 2 — Build"
+        S3
+        S4
+    end
+    subgraph "Session 3 — Audit"
+        S5
+    end
+
+    style S0 fill:#FFF3CD,stroke:#C9A800,color:#333
+    style S1 fill:#D1ECF1,stroke:#0C5460,color:#333
+    style S2 fill:#D1ECF1,stroke:#0C5460,color:#333
+    style S3 fill:#D4EDDA,stroke:#155724,color:#333
+    style S4 fill:#D4EDDA,stroke:#155724,color:#333
+    style S5 fill:#F8D7DA,stroke:#721C24,color:#333
 ```
-SESSION 1 — Plan Hardening
-  Step 1: Pre-flight checks (automated verification)
-  Step 2: Harden the plan + resolve ambiguities
 
-SESSION 2 — Execution
-  Step 3: Execute slices (bounded 30-120 min chunks)
-  Step 4: Completeness sweep (eliminate TODO/mock/stub artifacts)
-
-SESSION 3 — Review & Audit
-  Step 5: Independent review + drift detection (fresh agent, read-only)
-```
+**In plain English:** You describe what you want → the AI creates a detailed plan → the plan gets locked down so nothing can drift → the AI builds it in small checkpointed chunks → a fresh AI session reviews everything for mistakes.
 
 ### Why 3 Sessions?
 
-The executor shouldn't self-audit. Fresh context eliminates blind spots from implementation decisions. Each session loads the same guardrails but brings independent judgment.
+The executor shouldn't self-audit — that's like grading your own exam. Fresh context eliminates blind spots. Each session loads the same guardrails but brings independent judgment.
+
+### Two-Layer Guardrails
+
+Every project gets two layers of protection:
+
+```mermaid
+graph TB
+    subgraph "Layer 1 — Universal Baseline"
+        L1["Ships with every preset<br/>Architecture principles · Security · Testing<br/>Error handling · Type safety · Async patterns<br/><b>You get these whether you ask or not</b>"]
+    end
+    subgraph "Layer 2 — Project Profile"
+        L2["Generated per-project via interview<br/>Coverage targets · Latency SLAs · Compliance<br/>Domain rules · Architecture overrides<br/><b>You customize these to match YOUR needs</b>"]
+    end
+    subgraph "Domain Instructions"
+        L3["Auto-load by file type<br/>database.instructions.md when editing SQL<br/>security.instructions.md when editing auth code<br/><b>Loaded automatically — no action needed</b>"]
+    end
+
+    L1 --> L2 --> L3
+
+    style L1 fill:#4A90D9,stroke:#2C5F8A,color:#fff
+    style L2 fill:#7B68EE,stroke:#5A4CB5,color:#fff
+    style L3 fill:#50C878,stroke:#3A9A5C,color:#fff
+```
+
+**Layer 1** is your safety net — even teams who don't know industry best practices get type safety, error handling, security basics, and proper architecture patterns out of the box.
+
+**Layer 2** is your customization layer — experienced teams can add project-specific rules like "SOC2 compliance required" or "all monetary values must use Decimal, never float."
+
+See [CUSTOMIZATION.md](CUSTOMIZATION.md) for details on generating a project profile.
 
 ### Using with GitHub Copilot in VS Code?
 
@@ -68,6 +136,17 @@ See **[docs/COPILOT-VSCODE-GUIDE.md](docs/COPILOT-VSCODE-GUIDE.md)** for a compl
 ---
 
 ## Quick Start
+
+### Prerequisites
+
+Before you begin, make sure you have:
+
+- **VS Code** (or VS Code Insiders) installed — [download here](https://code.visualstudio.com/)
+- **GitHub Copilot** extension installed and signed in (requires a Copilot subscription)
+- **Git** installed — [download here](https://git-scm.com/)
+- A project you want to add guardrails to (or a new empty project)
+
+> **New to VS Code + Copilot?** See [docs/COPILOT-VSCODE-GUIDE.md](docs/COPILOT-VSCODE-GUIDE.md) for a walkthrough of Agent Mode, how to open the chat panel, and how to use prompt templates.
 
 ### 1. Use This Template
 
@@ -213,14 +292,24 @@ Each preset includes **3 skills** (`.github/skills/`) — multi-step executable 
 
 ### 4. Start Planning
 
-```
-1. Add your phase to docs/plans/DEPLOYMENT-ROADMAP.md
-2. Draft a *-PLAN.md in docs/plans/
-3. Copy the Pre-flight Prompt from the Instructions file → paste into agent chat
-4. Copy the Hardening Prompt → paste into a NEW agent session
-5. Copy the Execution Prompt → paste into a NEW agent session
-6. Copy the Review Prompt → paste into a FRESH agent session
-```
+Now you're ready to build your first feature with the pipeline. Here's how:
+
+**One-time setup** (do this once per project):
+1. Open VS Code → Copilot Chat panel (click the chat icon in the sidebar)
+2. Switch to **Agent Mode** (dropdown at the top of the chat panel)
+3. Click the **attach file** button (📎) and select `.github/prompts/project-profile.prompt.md`
+4. Send it — the AI will interview you about your project's needs and generate a profile
+
+**For each new feature:**
+1. In Copilot Chat, attach `.github/prompts/step0-specify-feature.prompt.md` — describe what you want to build
+2. Write a plan document in `docs/plans/` based on the specification
+3. Attach `.github/prompts/step1-preflight-check.prompt.md` — verifies your setup is ready
+4. Attach `.github/prompts/step2-harden-plan.prompt.md` — locks down the plan
+5. **Start a new chat session**, then attach `.github/prompts/step3-execute-slice.prompt.md` — builds the feature
+6. Attach `.github/prompts/step4-completeness-sweep.prompt.md` — checks for leftover TODOs
+7. **Start another new chat session**, then attach `.github/prompts/step5-review-gate.prompt.md` — independent review
+
+> **Tip**: The step prompts are numbered so they appear in order when you browse the file picker. You can also copy-paste the equivalent prompts from `docs/plans/AI-Plan-Hardening-Runbook-Instructions.md` if you prefer.
 
 ---
 
@@ -232,7 +321,9 @@ Once the framework is installed, here's how you use it day-to-day for any new fe
 
 | Resource | Location | Purpose |
 |----------|----------|---------|
-| **Copy-paste prompts** (all 5 steps) | `docs/plans/AI-Plan-Hardening-Runbook-Instructions.md` | The main file you'll use daily |
+| **Pipeline prompts** (Step 0–5) | `.github/prompts/step*.prompt.md` | Self-documenting workflow — browse the file picker |
+| **Copy-paste prompts** (all steps) | `docs/plans/AI-Plan-Hardening-Runbook-Instructions.md` | Alternative: copy-paste into agent chat |
+| **Project Profile generator** | `.github/prompts/project-profile.prompt.md` | One-time: customize guardrails for your project |
 | **Full runbook** (templates + examples) | `docs/plans/AI-Plan-Hardening-Runbook.md` | Deep reference |
 | **VS Code walkthrough** | `docs/COPILOT-VSCODE-GUIDE.md` | Session management, context tips, memory bridging |
 | **Worked examples** | `docs/plans/examples/` | .NET, TypeScript, Python, Java, Go |
@@ -248,7 +339,8 @@ I need to build a new feature using the AI Plan Hardening Pipeline.
 1. Read docs/plans/AI-Plan-Hardening-Runbook-Instructions.md for the full workflow
 2. Read docs/plans/DEPLOYMENT-ROADMAP.md for current project status
 3. Help me draft a plan in docs/plans/ for this feature: <DESCRIBE YOUR FEATURE>
-4. Walk me through the 5-step pipeline:
+4. Walk me through the pipeline:
+   - Step 0: Specify the feature (optional — use .github/prompts/step0-specify-feature.prompt.md)
    - Step 1: Run pre-flight checks
    - Step 2: Harden the plan (add Scope Contract, Execution Slices, Definition of Done)
    - Step 3: Execute slice-by-slice with validation gates
@@ -375,18 +467,22 @@ After running the wizard, you can **delete the `presets/` and `templates/` direc
 
 ## Key Concepts
 
+### What Is a "Hardened Plan"?
+
+A hardened plan is a regular feature plan that's been locked down with strict boundaries so the AI can't go off-script. Think of it like the difference between telling someone "build me a house" vs giving them architectural blueprints with exact measurements, approved materials, and inspection checkpoints.
+
 ### 6 Mandatory Template Blocks
 
-Every hardened plan must contain:
+Every hardened plan must contain these sections. Each one prevents a specific type of AI drift:
 
-| Block | Purpose |
-|-------|---------|
-| **Scope Contract** | What's in, what's out, what's forbidden |
-| **Required Decisions** | Ambiguities resolved before execution |
-| **Execution Slices** | 30-120 min chunks with dependencies and validation |
-| **Re-anchor Checkpoints** | Drift detection between slices |
-| **Definition of Done** | Measurable completion criteria |
-| **Post-Mortem** | Lessons learned for next phase |
+| Block | What It Does | What It Prevents |
+|-------|-------------|------------------|
+| **Scope Contract** | Lists what's in, what's out, and what's forbidden | AI adding features you didn't ask for |
+| **Required Decisions** | Resolves all ambiguities before coding starts | AI guessing when it should ask |
+| **Execution Slices** | Breaks work into 30-120 min chunks with checkpoints | AI losing track in long sessions |
+| **Re-anchor Checkpoints** | Drift detection between slices | AI gradually wandering off-plan |
+| **Definition of Done** | Measurable criteria — build passes, tests pass, no TODOs | AI declaring "done" when it's not |
+| **Post-Mortem** | Records what worked and what drifted | Same mistakes happening next time |
 
 ### Parallel Execution
 
@@ -397,12 +493,86 @@ Slices can be tagged `[parallel-safe]` or `[sequential]`:
 
 ### Stop Conditions
 
-Execution halts immediately if:
-- A Required Decision is still TBD
-- The agent needs to guess about behavior or architecture
-- A Validation Gate fails (build breaks, tests fail)
-- Work exceeds the current slice boundary
-- A Forbidden Action would be triggered
+The pipeline has built-in "emergency brakes." Execution halts immediately if:
+- A Required Decision is still TBD (don't code what you haven't decided)
+- The agent needs to guess about behavior or architecture (ask, don't assume)
+- A Validation Gate fails — build breaks, tests fail (fix before moving on)
+- Work exceeds the current slice boundary (stay focused)
+- A Forbidden Action would be triggered (some things are off-limits for a reason)
+
+---
+
+## Frequently Asked Questions
+
+### "I'm brand new to AI coding tools. Is this for me?"
+
+Yes. The template is designed so you don't need to know best practices upfront — the guardrails (instruction files) teach the AI the rules for you. Run the setup wizard, pick your tech stack, and the AI will follow industry standards automatically. You learn by seeing what it produces.
+
+### "What's a prompt template and how do I use one?"
+
+A prompt template is a file that contains pre-written instructions for the AI. In VS Code:
+1. Open Copilot Chat (sidebar icon)
+2. Switch to **Agent Mode** (dropdown at the top)
+3. Click the **attach file** button (📎 paperclip icon)
+4. Navigate to `.github/prompts/` and pick a file (e.g., `step0-specify-feature.prompt.md`)
+5. Press Enter — the AI reads the template and starts following its instructions
+
+You don't need to write complex prompts yourself. The templates do it for you.
+
+### "What if I don't use VS Code?"
+
+This template is designed for VS Code with GitHub Copilot. The instruction files (`.github/instructions/*.instructions.md`) and prompt templates are Copilot-specific features. If you use a different editor, you can still read the runbook and manually copy-paste the prompts into any AI chat, but you won't get the automatic file-based loading.
+
+### "Do I need to use every step every time?"
+
+No. Use the "When to Use" table as a guide:
+- **Small fix** (< 30 min)? Just commit directly. No pipeline needed.
+- **Medium feature** (2–8 hours)? Use the full pipeline — it'll save you rework.
+- **Large feature** (1+ days)? Definitely use it, with branch-per-slice for safety.
+
+Step 0 (Specify) and the Project Profile are both optional. Start with Steps 1–5 and add the others when you're comfortable.
+
+### "What's a 'session' and why do I need to start new ones?"
+
+A session is a single conversation with the AI (one Copilot Chat thread). The pipeline uses 3 separate sessions because an AI that wrote the code shouldn't review its own work — it has blind spots about its own decisions. Starting a fresh session gives you an independent reviewer. In VS Code, just click the **+** button in the Copilot Chat panel to start a new session.
+
+### "What if the AI ignores the guardrails?"
+
+This can happen if the context window is full (too many files loaded). Tips:
+- Keep instruction files under ~150 lines each
+- Use specific `applyTo` patterns (not `'**'` on everything)
+- Explicitly reference the relevant instruction file in your prompt: `#file:.github/instructions/security.instructions.md`
+
+See [docs/COPILOT-VSCODE-GUIDE.md](docs/COPILOT-VSCODE-GUIDE.md) for more troubleshooting tips.
+
+---
+
+## For AI Agents: Autonomous Setup
+
+> **If you are an AI coding agent** tasked with incorporating this framework into a project, read **[AGENT-SETUP.md](AGENT-SETUP.md)** for the full setup procedure — auto-detection rules, greenfield vs brownfield decision trees, exact non-interactive commands, merge strategies for existing guardrails, and a post-setup validator.
+
+<details>
+<summary><b>Quick Start Prompt for AI Agents</b> (click to expand)</summary>
+
+Copy-paste this prompt into your AI coding agent to install the framework:
+
+```
+Read the AI Plan Hardening Template repo at https://github.com/srnichols/ai-plan-hardening-template
+
+1. Read AGENT-SETUP.md for the full setup instructions
+2. Auto-detect my project's tech stack from its marker files (e.g. .csproj, package.json, pyproject.toml, go.mod, pom.xml)
+3. Clone the template repo to a temp directory
+4. Run the setup script against my project with the detected preset:
+   - PowerShell: .\setup.ps1 -Preset <detected> -ProjectPath "<my-project>" -ProjectName "<my-project-name>" -Force
+   - Bash: ./setup.sh --preset <detected> --path "<my-project>" --name "<my-project-name>" --force
+5. Replace all placeholders (<YOUR PROJECT NAME>, <YOUR TECH STACK>, <DATE>, build/test/lint commands) in the generated files with my actual project details
+6. Run the validation script to confirm setup is correct
+7. Clean up the cloned template repo
+
+After setup, explain what was installed and how to start using the planning pipeline.
+```
+
+</details>
 
 ---
 
