@@ -1,0 +1,67 @@
+name: Validate Setup
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  validate-powershell:
+    name: Validate (PowerShell)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run setup wizard (dotnet preset, non-interactive)
+        shell: pwsh
+        run: |
+          $testDir = "$env:RUNNER_TEMP\test-project"
+          New-Item -ItemType Directory -Path $testDir -Force
+          .\setup.ps1 -Preset dotnet -ProjectPath $testDir -ProjectName "TestProject" -Force
+
+      - name: Run validation
+        shell: pwsh
+        run: |
+          $testDir = "$env:RUNNER_TEMP\test-project"
+          .\validate-setup.ps1 -ProjectPath $testDir
+
+  validate-bash:
+    name: Validate (Bash)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run setup wizard (typescript preset, non-interactive)
+        run: |
+          TEST_DIR="$RUNNER_TEMP/test-project"
+          mkdir -p "$TEST_DIR"
+          chmod +x setup.sh
+          ./setup.sh --preset typescript --path "$TEST_DIR" --name "TestProject" --force
+
+      - name: Run validation
+        run: |
+          TEST_DIR="$RUNNER_TEMP/test-project"
+          chmod +x validate-setup.sh
+          ./validate-setup.sh --path "$TEST_DIR"
+
+  validate-all-presets:
+    name: Validate All Presets
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        preset: [dotnet, typescript, python, java, go, custom]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run setup (${{ matrix.preset }})
+        run: |
+          TEST_DIR="$RUNNER_TEMP/test-${{ matrix.preset }}"
+          mkdir -p "$TEST_DIR"
+          chmod +x setup.sh
+          ./setup.sh --preset ${{ matrix.preset }} --path "$TEST_DIR" --name "Test" --force
+
+      - name: Validate (${{ matrix.preset }})
+        run: |
+          TEST_DIR="$RUNNER_TEMP/test-${{ matrix.preset }}"
+          chmod +x validate-setup.sh
+          ./validate-setup.sh --path "$TEST_DIR"

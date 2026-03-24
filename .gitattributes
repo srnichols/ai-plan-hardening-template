@@ -1,0 +1,27 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Shell scripts — always LF
+*.sh text eol=lf
+
+# PowerShell — always CRLF on Windows, but store as LF in repo
+*.ps1 text eol=lf
+
+# Markdown — normalize
+*.md text
+
+# JSON — normalize
+*.json text
+
+# YAML — normalize
+*.yml text
+*.yaml text
+
+# Templates — normalize
+*.template text
+
+# Ignore for diff (binary-like or generated)
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary

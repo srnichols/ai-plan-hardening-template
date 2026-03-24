@@ -1,0 +1,9 @@
+# Default owners for everything
+* @srnichols
+
+# Preset-specific reviewers (add team members as needed)
+# presets/dotnet/    @dotnet-team
+# presets/typescript/ @typescript-team
+# presets/python/    @python-team
+# presets/java/      @java-team
+# presets/go/        @go-team
