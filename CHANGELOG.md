@@ -16,6 +16,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 - **CLI Wrapper** (`pforge`) — init, check, status, new-phase, branch, ext commands
 - **CLI Guide** — `docs/CLI-GUIDE.md` with dual-audience (human + AI agent) documentation
 - **Extensions Guide** — `docs/EXTENSIONS.md` with structure, manifest, distribution channels
+- **Lifecycle Hooks** — `.github/hooks/plan-forge.json` with SessionStart (inject principles), PreToolUse (enforce Forbidden Actions), PostToolUse (warn on TODO/FIXME markers)
+- **Skill Slash Commands** — all 3 skills now have proper frontmatter for `/database-migration`, `/staging-deploy`, `/test-sweep` invocation
+- **Agent Plugin Packaging** — `plugin.json` at repo root for `Chat: Install Plugin From Source` installation
+- **VS Code Checkpoints** — added as Option 0 in Rollback Protocol for beginners
+- **CHANGELOG** — version history
+- **CONTRIBUTING.md** — contribution guide
+- **VERSION file** — version tracking read by setup scripts
+- **"Start Here" path selector** — quick navigation at top of README
+- **Documentation Map** — reading order after setup
+- **Troubleshooting table** — common problems and fixes in README
 
 ### Changed
 - Renamed project from "AI Plan Hardening Template" to **Plan Forge**

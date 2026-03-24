@@ -477,6 +477,9 @@ These features are all **opt-in** — skip any that don't apply. Existing workfl
 | **Branch Strategy** | Declare trunk / feature-branch / branch-per-slice. Preflight checks you're on the right branch. | Add a Branch Strategy to your Scope Contract |
 | **Extensions** | Share custom reviewers, prompts, and instruction files as installable packages. | See [docs/EXTENSIONS.md](docs/EXTENSIONS.md) |
 | **CLI Wrapper** | `pforge` commands for init, status, new-phase, branch, and extension management. | See [docs/CLI-GUIDE.md](docs/CLI-GUIDE.md) |
+| **Lifecycle Hooks** | Auto-enforce Forbidden Actions (PreToolUse), inject Project Principles at session start, warn on TODO/FIXME after edits. | Installed automatically with setup — see `.github/hooks/` |
+| **Agent Plugin** | Install Plan Forge as a VS Code agent plugin from a Git URL — no setup scripts needed. | `Chat: Install Plugin From Source` → repo URL |
+| **Skill Slash Commands** | Invoke skills directly: `/database-migration`, `/staging-deploy`, `/test-sweep`. | Type `/` in Copilot Chat to see available skills |
 
 ---
 

@@ -798,6 +798,18 @@ When stopped:
 
 ## Rollback Protocol
 
+### Option 0: VS Code Checkpoints (Easiest — Recommended for Beginners)
+
+VS Code automatically creates **checkpoints** (snapshots) during Copilot Agent sessions. You can roll back to any checkpoint without using Git commands.
+
+**How to use:**
+1. In the Chat view, look for the checkpoint markers between messages
+2. Click a checkpoint to preview the state at that point
+3. Click **Restore** to roll back all files to that snapshot
+4. The agent can continue from the restored state
+
+> **When to use**: Quick rollback during a single session. No Git knowledge needed. Checkpoints are lost when the session ends — for permanent rollback, use Git options below.
+
 ### Option 1: Git Stash (Quick Save)
 
 ```bash

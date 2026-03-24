@@ -1,3 +1,9 @@
+---
+name: database-migration
+description: Generate, review, test, and deploy database schema migrations. Use when adding columns, creating tables, or changing schema.
+argument-hint: "[migration description, e.g. 'add user_profiles table']"
+---
+
 # Database Migration Skill
 
 ## Trigger

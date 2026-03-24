@@ -1,0 +1,28 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": ".github/hooks/scripts/session-start.sh",
+        "windows": "powershell -ExecutionPolicy Bypass -File .github/hooks/scripts/session-start.ps1",
+        "timeout": 10
+      }
+    ],
+    "PreToolUse": [
+      {
+        "type": "command",
+        "command": ".github/hooks/scripts/check-forbidden.sh",
+        "windows": "powershell -ExecutionPolicy Bypass -File .github/hooks/scripts/check-forbidden.ps1",
+        "timeout": 5
+      }
+    ],
+    "PostToolUse": [
+      {
+        "type": "command",
+        "command": ".github/hooks/scripts/post-edit-validate.sh",
+        "windows": "powershell -ExecutionPolicy Bypass -File .github/hooks/scripts/post-edit-validate.ps1",
+        "timeout": 15
+      }
+    ]
+  }
+}

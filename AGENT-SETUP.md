@@ -179,6 +179,8 @@ The validation script checks for these files. All must be present and non-empty:
 | `.github/prompts/project-principles.prompt.md` | Guided workshop to define Project Principles |
 | `.forge.json` | Setup metadata |
 | `.forge/extensions/extensions.json` | Installed extensions manifest |
+| `.github/hooks/plan-forge.json` | Lifecycle hooks (SessionStart, PreToolUse, PostToolUse) |
+| `.github/hooks/scripts/*.sh`, `*.ps1` | Hook scripts (inject context, enforce forbidden actions, warn on TODOs) |
 | `pforge.ps1` / `pforge.sh` | CLI wrapper scripts |
 
 ---

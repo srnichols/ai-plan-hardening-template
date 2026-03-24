@@ -345,10 +345,10 @@ if ($Preset -ne 'custom') {
     }
 }
 
-# ─── Step 3c: Copy Project Principles Prompt + Extension Templates ─────
+# ─── Step 3c: Copy Project Principles Prompt + Extension Templates + Hooks ─────
 if ($Preset -ne 'custom') {
     Write-Host ""
-    Write-Host "Step 3c: Project Principles prompt + extension templates" -ForegroundColor Cyan
+    Write-Host "Step 3c: Project Principles prompt + extension templates + hooks" -ForegroundColor Cyan
 
     # Project Principles prompt
     $ppPromptSrc = Join-Path $templateRoot "templates/.github/prompts/project-principles.prompt.md"
@@ -363,6 +363,16 @@ if ($Preset -ne 'custom') {
         Get-ChildItem -Path $extTemplateSrc -Recurse -File | ForEach-Object {
             $relativePath = $_.FullName.Substring($extTemplateSrc.Length + 1)
             $dst = Join-Path $ProjectPath ".forge/$relativePath"
+            Copy-WithCreate $_.FullName $dst $Force.IsPresent
+        }
+    }
+
+    # Hooks
+    $hooksSrc = Join-Path $templateRoot "templates/.github/hooks"
+    if (Test-Path $hooksSrc) {
+        Get-ChildItem -Path $hooksSrc -Recurse -File | ForEach-Object {
+            $relativePath = $_.FullName.Substring($hooksSrc.Length + 1)
+            $dst = Join-Path $ProjectPath ".github/hooks/$relativePath"
             Copy-WithCreate $_.FullName $dst $Force.IsPresent
         }
     }

@@ -362,7 +362,7 @@ fi
 # ─── Step 3c: Copy Project Principles Prompt + Extension Templates ─────
 if [[ "$PRESET" != "custom" ]]; then
     echo ""
-    cyan "Step 3c: Project Principles prompt + extension templates"
+    cyan "Step 3c: Project Principles prompt + extension templates + hooks"
 
     # Project Principles prompt
     pp_prompt_src="$TEMPLATE_ROOT/templates/.github/prompts/project-principles.prompt.md"
@@ -379,6 +379,16 @@ if [[ "$PRESET" != "custom" ]]; then
             dst="$PROJECT_PATH/.forge/$rel_path"
             copy_with_create "$file" "$dst" || true
         done < <(find "$ext_template_src" -type f -print0)
+    fi
+
+    # Hooks
+    hooks_src="$TEMPLATE_ROOT/templates/.github/hooks"
+    if [[ -d "$hooks_src" ]]; then
+        while IFS= read -r -d '' file; do
+            rel_path="${file#"$hooks_src/"}"
+            dst="$PROJECT_PATH/.github/hooks/$rel_path"
+            copy_with_create "$file" "$dst" || true
+        done < <(find "$hooks_src" -type f -print0)
     fi
 fi
 

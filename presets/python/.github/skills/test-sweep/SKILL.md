@@ -1,3 +1,9 @@
+---
+name: test-sweep
+description: Run all test suites (unit, integration, API, E2E) and aggregate results into a summary report. Use after completing execution slices or before the Review Gate.
+argument-hint: "[optional: specific test category to run]"
+---
+
 # Test Sweep Skill
 
 ## Trigger

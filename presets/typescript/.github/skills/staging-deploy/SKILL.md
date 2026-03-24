@@ -1,3 +1,9 @@
+---
+name: staging-deploy
+description: Build, push, migrate, and deploy to staging environment with health check verification. Use when deploying a completed phase to staging.
+argument-hint: "[service or component to deploy]"
+---
+
 # Staging Deploy Skill
 
 ## Trigger
