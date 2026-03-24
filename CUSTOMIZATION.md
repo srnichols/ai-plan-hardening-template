@@ -484,13 +484,18 @@ Plan Forge installs **lifecycle hooks** (`.github/hooks/plan-forge.json`) that r
 
 ## Skill Slash Commands (Automatic)
 
-After setup, three skills are available as slash commands in Copilot Chat:
+After setup, eight skills are available as slash commands in Copilot Chat:
 
 | Command | What It Does |
 |---------|-------------|
 | `/database-migration` | Generate, review, test, and deploy schema migrations |
 | `/staging-deploy` | Build, push, migrate, deploy, and verify on staging |
 | `/test-sweep` | Run all test suites and aggregate results |
+| `/dependency-audit` | Scan dependencies for vulnerabilities, outdated packages, license issues |
+| `/code-review` | Comprehensive review: architecture, security, testing, patterns |
+| `/release-notes` | Generate release notes from git history and CHANGELOG |
+| `/api-doc-gen` | Generate or update OpenAPI spec, validate spec-to-code consistency |
+| `/onboarding` | Walk a new developer through project setup, architecture, and first task |
 
 Type `/` in the chat input to see these alongside your prompt templates. Add `user-invocable: false` to a skill's frontmatter to hide it from the menu while keeping it auto-invocable.
 

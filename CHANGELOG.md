@@ -18,6 +18,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 - **Extensions Guide** — `docs/EXTENSIONS.md` with structure, manifest, distribution channels
 - **Lifecycle Hooks** — `.github/hooks/plan-forge.json` with SessionStart (inject principles), PreToolUse (enforce Forbidden Actions), PostToolUse (warn on TODO/FIXME markers)
 - **Skill Slash Commands** — all 3 skills now have proper frontmatter for `/database-migration`, `/staging-deploy`, `/test-sweep` invocation
+- **5 New Skills** — `/dependency-audit`, `/code-review`, `/release-notes`, `/api-doc-gen`, `/onboarding` (8 total per preset)
+- **2 New Shared Agents** — `dependency-reviewer.agent.md` (supply chain security) and `compliance-reviewer.agent.md` (GDPR/CCPA/SOC2)
+- **Agents vs Skills explainer** — README now explains the difference with comparison table
 - **Agent Plugin Packaging** — `plugin.json` at repo root for `Chat: Install Plugin From Source` installation
 - **VS Code Checkpoints** — added as Option 0 in Rollback Protocol for beginners
 - **CHANGELOG** — version history

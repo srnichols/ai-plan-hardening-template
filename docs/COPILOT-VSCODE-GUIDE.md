@@ -386,6 +386,11 @@ Multi-step executable procedures that chain together tool calls. Each skill file
 | `database-migration/` | `/database-migration` | Creating, validating, and deploying schema changes |
 | `staging-deploy/` | `/staging-deploy` | Full deployment pipeline from build to verification |
 | `test-sweep/` | `/test-sweep` | Running all test suites with aggregated reporting |
+| `dependency-audit/` | `/dependency-audit` | Scan for vulnerable, outdated, or license-conflicting packages |
+| `code-review/` | `/code-review` | Comprehensive review: architecture, security, testing, patterns |
+| `release-notes/` | `/release-notes` | Generate release notes from git history and CHANGELOG |
+| `api-doc-gen/` | `/api-doc-gen` | Generate or update OpenAPI spec, validate consistency |
+| `onboarding/` | `/onboarding` | Walk a new developer through setup, architecture, and first task |
 
 #### AI Agent Discoverability
 

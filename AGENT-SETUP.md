@@ -163,8 +163,8 @@ The validation script checks for these files. All must be present and non-empty:
 | Directory / Files | Purpose |
 |-------------------|---------|
 | `.github/prompts/*.prompt.md` (14 files) | Scaffolding recipes for entities, services, tests, workers, middleware, DTOs, config, Dockerfiles |
-| `.github/agents/*.agent.md` (11 files) | Specialized reviewer/executor roles (security, architecture, API contracts, multi-tenancy, etc.) |
-| `.github/skills/*/SKILL.md` (3 skills) | Multi-step procedures for migrations, deploys, test sweeps |
+| `.github/agents/*.agent.md` (13 files) | Specialized reviewer/executor roles (security, architecture, API contracts, dependency, compliance, multi-tenancy, etc.) |
+| `.github/skills/*/SKILL.md` (8 skills) | Multi-step procedures for migrations, deploys, test sweeps, code review, dependency audit, release notes, API docs, onboarding |
 
 ### Optional but Recommended
 

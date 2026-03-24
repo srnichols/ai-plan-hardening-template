@@ -59,6 +59,29 @@ graph TD
 | **Instruction Files** | Rules that auto-load when editing specific file types | The rulebook — coding standards, security, testing, architecture |
 | **Scaffolding Prompts** | Templates for generating common code patterns | Cookie cutters — consistent entities, services, controllers, tests |
 | **Agent Definitions** | Specialized AI reviewer personas (security, architecture, etc.) | Expert reviewers — each focuses on one thing and checks it deeply |
+| **Skills** | Multi-step executable procedures invoked via `/` slash commands | Power tools — chain multiple operations with validation between steps |
+| **Lifecycle Hooks** | Shell commands that run automatically at agent lifecycle points | Safety rails — enforce rules without human intervention |
+
+### Agents vs Skills: What's the Difference?
+
+Both agents and skills extend Copilot, but they serve different purposes:
+
+| | Agents (`.github/agents/*.agent.md`) | Skills (`.github/skills/*/SKILL.md`) |
+|---|---|---|
+| **Purpose** | **Review and audit** — read-only analysis | **Do work** — multi-step executable procedures |
+| **How invoked** | Select from agent picker or reference with `#file:` | Type `/skill-name` as a slash command in chat |
+| **Tools available** | Read + Search only (no file edits) | Full tool access (read, write, terminal, search) |
+| **Example** | "Review this code for security issues" | "Run all tests and report results" |
+| **Runs when** | You ask for a review or the pipeline triggers one | You invoke the slash command or the agent loads it automatically |
+| **Output** | Findings table with severity ratings | Executed actions with status report |
+
+**Quick rule**: Agents *look at* your code. Skills *do things* to your project.
+
+**Installed counts** (per preset after setup):
+- **8 stack-specific agents** — architecture, database, deploy, performance, security, test runner + 2 new per-stack
+- **7 shared agents** — API contracts, accessibility, multi-tenancy, CI/CD, observability, dependency, compliance
+- **3 pipeline agents** — plan-hardener, executor, reviewer-gate
+- **8 skills** — database-migration, staging-deploy, test-sweep, dependency-audit, code-review, release-notes, api-doc-gen, onboarding
 
 > **You don't need to understand all of this upfront.** Run the setup wizard, follow the numbered step prompts, and the framework guides you through.
 
@@ -479,7 +502,7 @@ These features are all **opt-in** — skip any that don't apply. Existing workfl
 | **CLI Wrapper** | `pforge` commands for init, status, new-phase, branch, and extension management. | See [docs/CLI-GUIDE.md](docs/CLI-GUIDE.md) |
 | **Lifecycle Hooks** | Auto-enforce Forbidden Actions (PreToolUse), inject Project Principles at session start, warn on TODO/FIXME after edits. | Installed automatically with setup — see `.github/hooks/` |
 | **Agent Plugin** | Install Plan Forge as a VS Code agent plugin from a Git URL — no setup scripts needed. | `Chat: Install Plugin From Source` → repo URL |
-| **Skill Slash Commands** | Invoke skills directly: `/database-migration`, `/staging-deploy`, `/test-sweep`. | Type `/` in Copilot Chat to see available skills |
+| **Skill Slash Commands** | Invoke skills directly: `/database-migration`, `/staging-deploy`, `/test-sweep`, `/dependency-audit`, `/code-review`, `/release-notes`, `/api-doc-gen`, `/onboarding`. | Type `/` in Copilot Chat to see available skills |
 
 ---
 

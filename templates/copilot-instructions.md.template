@@ -128,6 +128,11 @@ This project uses the **Plan Forge Pipeline** for feature development.
 | `/database-migration` | Generate, review, test, and deploy schema migrations |
 | `/staging-deploy` | Build, push, migrate, deploy, and verify on staging |
 | `/test-sweep` | Run all test suites and aggregate results |
+| `/dependency-audit` | Scan dependencies for vulnerabilities, outdated packages, license issues |
+| `/code-review` | Comprehensive review: architecture, security, testing, patterns |
+| `/release-notes` | Generate release notes from git history and CHANGELOG |
+| `/api-doc-gen` | Generate or update OpenAPI spec, validate spec-to-code consistency |
+| `/onboarding` | Walk a new developer through project setup, architecture, and first task |
 
 ### Lifecycle Hooks (`.github/hooks/`)
 
