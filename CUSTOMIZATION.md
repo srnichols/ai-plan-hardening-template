@@ -33,6 +33,15 @@ Run the **Project Profile** prompt to customize guardrails for your project:
 
 **Project Principles vs Project Profile**: Principles = what the project *believes* (human declarations). Profile = how Copilot should *write code* (generated guardrails). Both optional, both complementary.
 
+| | Project Principles | Project Profile |
+|---|---|---|
+| **What it is** | "We use PostgreSQL, not MongoDB" | "Use parameterized queries with Dapper" |
+| **Who writes it** | You (or guided by the workshop) | Generated from interview answers |
+| **Example: Testing** | "90% coverage on business logic — non-negotiable" | "Use xUnit with `[Fact]` and `[Theory]`, mock with NSubstitute" |
+| **Example: Architecture** | "All data access goes through repositories — no direct SQL in services" | "Repositories return domain objects, not DTOs. Use async/await for all DB calls" |
+| **Example: Security** | "No secrets in code — ever" | "Use `IConfiguration` for secrets, validate all input with FluentValidation" |
+| **When it matters** | Rejects a PR that uses MongoDB when Postgres is committed | Tells Copilot *how* to write the Postgres query correctly |
+
 This creates **project-specific** quality standards that supplement the universal baseline.
 
 #### Two-Layer Guardrail Model
