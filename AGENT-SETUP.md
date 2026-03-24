@@ -194,7 +194,14 @@ The validation script checks for these files. All must be present and non-empty:
 |------|---------|
 | `.vscode/settings.json` | Copilot IDE settings |
 | `docs/COPILOT-VSCODE-GUIDE.md` | VS Code usage guide |
+| `docs/CLI-GUIDE.md` | CLI wrapper documentation |
+| `docs/EXTENSIONS.md` | Extension system documentation |
+| `docs/plans/PROJECT-PRINCIPLES-TEMPLATE.md` | Template for defining project principles |
+| `.github/instructions/project-principles.instructions.md` | Auto-loads Project Principles when they exist |
+| `.github/prompts/project-principles.prompt.md` | Guided workshop to define Project Principles |
 | `.forge.json` | Setup metadata |
+| `.forge/extensions/extensions.json` | Installed extensions manifest |
+| `pforge.ps1` / `pforge.sh` | CLI wrapper scripts |
 
 ---
 
@@ -217,7 +224,26 @@ The validation script flags any remaining `<YOUR` or `<DATE>` strings.
 
 ## Section 5: After Setup — Using the Pipeline
 
-Once setup and validation pass, the agent can run the 5-step planning pipeline:
+Once setup and validation pass, the agent can run the 5-step planning pipeline.
+
+### Option A: Using the CLI (`pforge`)
+
+If `pforge.ps1` (Windows) or `pforge.sh` (macOS/Linux) exists in the repo root, use CLI commands for project management tasks:
+
+```
+pforge check                          # Validate setup
+pforge status                         # Show all phases with status
+pforge new-phase <feature-name>       # Create plan file + roadmap entry
+pforge branch <plan-file>             # Create branch from plan's Branch Strategy
+pforge ext install <path>             # Install an extension
+pforge ext list                       # List installed extensions
+```
+
+See `docs/CLI-GUIDE.md` for full command reference and AI Agent integration guide.
+
+> **Important**: The CLI handles project management. The core pipeline (hardening, execution, review) still runs through Agent Mode prompts — see Option B.
+
+### Option B: Using the Pipeline Prompts (Manual or Agent Mode)
 
 1. **Read** `docs/plans/AI-Plan-Hardening-Runbook-Instructions.md`
 2. **Follow** the copy-paste prompts for each step
@@ -225,5 +251,13 @@ Once setup and validation pass, the agent can run the 5-step planning pipeline:
 4. **Use prompt templates** (`.github/prompts/`) during execution for consistent scaffolding
 5. **Use agent definitions** (`.github/agents/`) for focused reviews (security, architecture, performance)
 6. **Use skills** (`.github/skills/`) for multi-step procedures (migrations, deploys, test sweeps)
+
+### Post-Setup Recommendations
+
+After the pipeline is installed, recommend these optional steps to the user:
+
+1. **Define Project Principles** — Run `.github/prompts/project-principles.prompt.md` to declare non-negotiable principles, tech commitments, and forbidden patterns. These are automatically checked in Steps 1, 2, and 5.
+2. **Generate a Project Profile** — Run `.github/prompts/project-profile.prompt.md` to generate Copilot-specific coding guardrails.
+3. **Install Extensions** — If the team has shared guardrail packages, install them via `pforge ext install <path>` or manually. See `docs/EXTENSIONS.md`.
 
 For VS Code Copilot-specific workflow details, see `docs/COPILOT-VSCODE-GUIDE.md`.
