@@ -51,17 +51,17 @@ function Write-Banner {
     Write-Host ""
 }
 
-function Prompt-Value([string]$Message, [string]$Default) {
+function Get-PromptValue([string]$Message, [string]$Default) {
     if ($Default) {
-        $input = Read-Host "$Message [$Default]"
-        if ([string]::IsNullOrWhiteSpace($input)) { return $Default }
-        return $input
+        $response = Read-Host "$Message [$Default]"
+        if ([string]::IsNullOrWhiteSpace($response)) { return $Default }
+        return $response
     }
     else {
         do {
-            $input = Read-Host $Message
-        } while ([string]::IsNullOrWhiteSpace($input))
-        return $input
+            $response = Read-Host $Message
+        } while ([string]::IsNullOrWhiteSpace($response))
+        return $response
     }
 }
 
@@ -79,7 +79,7 @@ function Copy-WithCreate([string]$Source, [string]$Destination, [bool]$Overwrite
     return $true
 }
 
-function Replace-Placeholders([string]$FilePath, [string]$Name, [string]$Stack) {
+function Update-Placeholders([string]$FilePath, [string]$Name, [string]$Stack) {
     if (-not (Test-Path $FilePath)) { return }
     $content = Get-Content $FilePath -Raw
     $content = $content -replace '<YOUR PROJECT NAME>', $Name
@@ -88,11 +88,11 @@ function Replace-Placeholders([string]$FilePath, [string]$Name, [string]$Stack) 
     Set-Content -Path $FilePath -Value $content -NoNewline
 }
 
-function Detect-Preset([string]$TargetPath) {
+function Find-Preset([string]$TargetPath) {
     # .NET markers
-    $hasCsproj = (Get-ChildItem -Path $TargetPath -Filter "*.csproj" -Recurse -Depth 2 -ErrorAction SilentlyContinue | Select-Object -First 1) -ne $null
-    $hasSln    = (Get-ChildItem -Path $TargetPath -Filter "*.sln" -Recurse -Depth 1 -ErrorAction SilentlyContinue | Select-Object -First 1) -ne $null
-    $hasFsproj = (Get-ChildItem -Path $TargetPath -Filter "*.fsproj" -Recurse -Depth 2 -ErrorAction SilentlyContinue | Select-Object -First 1) -ne $null
+    $hasCsproj = $null -ne (Get-ChildItem -Path $TargetPath -Filter "*.csproj" -Recurse -Depth 2 -ErrorAction SilentlyContinue | Select-Object -First 1)
+    $hasSln    = $null -ne (Get-ChildItem -Path $TargetPath -Filter "*.sln" -Recurse -Depth 1 -ErrorAction SilentlyContinue | Select-Object -First 1)
+    $hasFsproj = $null -ne (Get-ChildItem -Path $TargetPath -Filter "*.fsproj" -Recurse -Depth 2 -ErrorAction SilentlyContinue | Select-Object -First 1)
 
     # Python markers
     $hasPyproject    = Test-Path (Join-Path $TargetPath "pyproject.toml")
@@ -141,7 +141,7 @@ function Detect-Preset([string]$TargetPath) {
 Write-Banner
 
 if (-not $ProjectPath) {
-    $ProjectPath = Prompt-Value "Target project directory" (Get-Location).Path
+    $ProjectPath = Get-PromptValue "Target project directory" (Get-Location).Path
 }
 $ProjectPath = (Resolve-Path $ProjectPath -ErrorAction SilentlyContinue)?.Path ?? $ProjectPath
 
@@ -152,14 +152,14 @@ if (-not (Test-Path $ProjectPath)) {
 
 if (-not $ProjectName) {
     $defaultName = Split-Path $ProjectPath -Leaf
-    $ProjectName = Prompt-Value "Project name" $defaultName
+    $ProjectName = Get-PromptValue "Project name" $defaultName
 }
 
 if (-not $Preset) {
     if ($AutoDetect) {
         Write-Host ""
         Write-Host "Auto-detecting tech stack..." -ForegroundColor Cyan
-        $Preset = Detect-Preset $ProjectPath
+        $Preset = Find-Preset $ProjectPath
     }
     else {
         Write-Host ""
@@ -171,7 +171,7 @@ if (-not $Preset) {
         Write-Host "  5) go          — Go / Chi / Gin / Standard Library"
         Write-Host "  6) custom      — Shared files only (add your own instructions)"
         Write-Host ""
-        $choice = Prompt-Value "Select preset (1-6 or name)" "1"
+        $choice = Get-PromptValue "Select preset (1-6 or name)" "1"
         $Preset = switch ($choice) {
             '1' { 'dotnet' }
             '2' { 'typescript' }
@@ -322,7 +322,7 @@ Write-Host ""
 Write-Host "Step 4: Replacing placeholders" -ForegroundColor Cyan
 
 Get-ChildItem -Path $ProjectPath -Recurse -Include "*.md" -File | ForEach-Object {
-    Replace-Placeholders $_.FullName $ProjectName $stackLabel
+    Update-Placeholders $_.FullName $ProjectName $stackLabel
 }
 
 Write-Host "  DONE  Placeholders replaced" -ForegroundColor Green
