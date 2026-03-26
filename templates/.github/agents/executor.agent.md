@@ -64,6 +64,25 @@ Run the **Completeness Sweep** (Runbook Section 6.1):
 - STOP if work would exceed the current slice boundary
 - Commit after each passed slice
 
+## Skill Awareness
+
+When available, use installed skills (`.github/skills/*/SKILL.md`) to streamline execution:
+
+- **`database-migration`** — Use when a slice involves schema changes. The skill handles generate → validate → deploy.
+- **`test-sweep`** — Use after completing all slices to run the full test suite with aggregated reporting.
+- **`staging-deploy`** — Use when a slice involves deployment verification.
+- **`code-review`** — Use for self-check before handing off to the Reviewer Gate.
+
+Check `.github/skills/` for available skills before executing slice tasks that match a skill's domain.
+
+## OpenBrain Integration (if configured)
+
+If the OpenBrain MCP server is available:
+
+- **Before each slice**: `search_thoughts("<slice topic>", project: "<project>")` — load prior decisions and patterns relevant to the current slice
+- **After each slice**: `capture_thought("Slice N: <key decision or outcome>", project: "<project>", source: "plan-forge-step-3-slice-N")` — persist decisions made during execution
+- **After completeness sweep**: `capture_thoughts([...lessons], project: "<project>", source: "plan-forge-step-4-sweep")` — batch capture patterns, conventions, and lessons discovered
+
 ## Completion
 
 When all slices pass and the completeness sweep is clean:

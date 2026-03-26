@@ -94,7 +94,7 @@ Both agents and skills extend Copilot, but they serve different purposes:
 **Installed counts** (per preset after setup):
 - **8 stack-specific agents** — architecture, database, deploy, performance, security, test runner + 2 new per-stack
 - **7 shared agents** — API contracts, accessibility, multi-tenancy, CI/CD, observability, dependency, compliance
-- **3 pipeline agents** — plan-hardener, executor, reviewer-gate
+- **5 pipeline agents** — specifier, plan-hardener, executor, reviewer-gate, shipper
 - **8 skills** — database-migration, staging-deploy, test-sweep, dependency-audit, code-review, release-notes, api-doc-gen, onboarding
 
 > **You don't need to understand all of this upfront.** Run the setup wizard, follow the numbered step prompts, and the framework guides you through.
@@ -305,13 +305,15 @@ In addition, the setup wizard installs **5 cross-stack agents** for SaaS-critica
 
 ### Pipeline Agents (Shared)
 
-In addition to the preset reviewer agents, the template includes **3 pipeline agents** that automate the Plan → Execute → Review workflow with handoff buttons:
+In addition to the preset reviewer agents, the template includes **5 pipeline agents** that automate the full Specify → Plan → Execute → Review → Ship workflow with handoff buttons:
 
 | Agent | Purpose | Hands Off To |
-|-------|---------|--------------|
+|-------|---------|--------------||
+| `specifier.agent.md` | Interview user to define what & why (Step 0) | Plan Hardener |
 | `plan-hardener.agent.md` | Harden draft plans into execution contracts | Executor |
 | `executor.agent.md` | Execute slices with validation gates | Reviewer Gate |
-| `reviewer-gate.agent.md` | Read-only audit for drift and violations | (terminal) |
+| `reviewer-gate.agent.md` | Read-only audit for drift and violations | Shipper (PASS) / Executor (LOCKOUT) |
+| `shipper.agent.md` | Commit, update roadmap, capture postmortem, push/PR | (terminal) |
 
 These are stack-independent and use `handoffs:` frontmatter to chain sessions with clickable buttons.
 
@@ -364,7 +366,7 @@ Once the framework is installed, here's how you use it day-to-day for any new fe
 | **Full runbook** (templates + examples) | `docs/plans/AI-Plan-Hardening-Runbook.md` | Deep reference |
 | **VS Code walkthrough** | `docs/COPILOT-VSCODE-GUIDE.md` | Session management, context tips, memory bridging |
 | **Worked examples** | `docs/plans/examples/` | .NET, TypeScript, Python, Java, Go |
-| **Pipeline agents** | `.github/agents/plan-hardener.agent.md` → `executor.agent.md` → `reviewer-gate.agent.md` | Click-through alternative to copy-paste |
+| **Pipeline agents** | `.github/agents/specifier.agent.md` → `plan-hardener.agent.md` → `executor.agent.md` → `reviewer-gate.agent.md` → `shipper.agent.md` | Click-through alternative to copy-paste |
 
 ### Daily Workflow Prompt
 
@@ -396,10 +398,13 @@ Remind me when to start a new session. Start with Step 1 now.
 
 Instead of prompts, use the pipeline agents that chain automatically with handoff buttons:
 
-1. Start a chat with the **Plan Hardener** agent
-2. Tell it: "Harden `docs/plans/<YOUR-PLAN>.md`"
+1. Start a chat with the **Specifier** agent — describe your feature idea
+2. Click **"Start Plan Hardening →"** when the spec is complete
 3. Click **"Start Execution →"** when hardening is done
 4. Click **"Run Review Gate →"** when execution is done
+5. Click **"Ship It →"** when the review passes (commits, updates roadmap, captures postmortem)
+
+If the review finds critical issues, click **"Fix Issues →"** to return to the Executor, then re-run the Review Gate.
 
 Both approaches produce identical results — agents just make session transitions smoother.
 
@@ -475,7 +480,7 @@ Running `setup.ps1` (PowerShell) or `setup.sh` (Bash) with a preset:
 
 1. **Copies preset instruction files** from `presets/{stack}/` to your project root (15 instruction files, 16 for TypeScript)
 2. **Copies prompt templates** for scaffolding new entities, services, tests (14 prompts)
-3. **Copies agent definitions** for architecture review, security audit, testing (6 stack-specific + 5 shared agents)
+3. **Copies agent definitions** for architecture review, security audit, testing (6 stack-specific + 7 shared + 5 pipeline agents)
 4. **Copies skill workflows** for migrations, deployments, test sweeps (3 skills)
 5. **Generates `AGENTS.md`** with patterns for your tech stack
 6. **Generates `.github/copilot-instructions.md`** with stack-specific conventions

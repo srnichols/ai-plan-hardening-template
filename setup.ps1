@@ -381,7 +381,7 @@ if ($Preset -ne 'custom') {
         }
     }
 
-    # Pipeline agents (plan-hardener, executor, reviewer-gate)
+    # Pipeline agents (specifier, plan-hardener, executor, reviewer-gate, shipper)
     $pipelineAgentsDir = Join-Path $templateRoot "templates/.github/agents"
     if (Test-Path $pipelineAgentsDir) {
         Get-ChildItem -Path $pipelineAgentsDir -Filter "*.agent.md" -File | ForEach-Object {

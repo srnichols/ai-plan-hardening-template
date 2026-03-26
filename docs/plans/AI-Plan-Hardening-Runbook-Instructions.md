@@ -438,27 +438,34 @@ Do NOT modify any files. Report only.
 
 ## Alternative: Using Pipeline Agents
 
-Instead of copy-pasting prompts for each session, you can use the **pipeline agents** — pre-built `.agent.md` files that chain the 3-session workflow with clickable handoff buttons.
+Instead of copy-pasting prompts for each session, you can use the **pipeline agents** — pre-built `.agent.md` files that chain the full workflow with clickable handoff buttons.
 
 ### Pipeline Agent Chain
 
 ```
-Plan Hardener → Executor → Reviewer Gate
-     │                │              │
-     │  "Start        │  "Run        │  (terminal —
-     │  Execution →"  │  Review      │   no handoff)
-     │                │  Gate →"     │
+Specifier → Plan Hardener → Executor → Reviewer Gate → Shipper
+     │              │              │              │            │
+     │  "Start      │  "Start      │  "Run        │  "Ship     │
+     │  Plan        │  Execution   │  Review      │  It →"     │  (terminal)
+     │  Hardening   │  →"          │  Gate →"     │            │
+     │  →"          │              │              │            │
+     │              │              │         LOCKOUT:          │
+     │              │              │  "Fix Issues →" ──────────┘
+     │              │              │  (returns to Executor)
 ```
 
 ### How to Use
 
-1. **Open a chat** with the `Plan Hardener` agent (`.github/agents/plan-hardener.agent.md`)
-2. **Provide your plan**: "Harden `docs/plans/Phase-YOUR-FEATURE-PLAN.md`"
-3. The agent runs pre-flight checks, adds the 6 mandatory template blocks, and resolves TBDs
-4. When done, click **"Start Execution →"** to hand off to the Executor agent
-5. The **Executor** runs slices one-by-one with validation gates, then runs the completeness sweep
-6. When done, click **"Run Review Gate →"** to hand off to the Reviewer Gate agent
-7. The **Reviewer Gate** audits all changes read-only and reports a PASS/FAIL verdict
+1. **Open a chat** with the `Specifier` agent (`.github/agents/specifier.agent.md`)
+2. **Describe your feature idea** — the agent interviews you to produce a specification
+3. When done, click **"Start Plan Hardening →"** to hand off to the Plan Hardener agent
+4. The **Plan Hardener** runs pre-flight checks, adds the 6 mandatory template blocks, and resolves TBDs
+5. When done, click **"Start Execution →"** to hand off to the Executor agent
+6. The **Executor** runs slices one-by-one with validation gates, then runs the completeness sweep
+7. When done, click **"Run Review Gate →"** to hand off to the Reviewer Gate agent
+8. The **Reviewer Gate** audits all changes read-only and reports a PASS/FAIL verdict
+9. If PASS: click **"Ship It →"** to hand off to the Shipper agent (commits, updates roadmap, captures postmortem)
+10. If LOCKOUT: click **"Fix Issues →"** to return to the Executor for targeted fixes, then re-run the Review Gate
 
 ### Pipeline Agents vs Copy-Paste Prompts
 
@@ -467,6 +474,8 @@ Plan Hardener → Executor → Reviewer Gate
 | Session transitions | Clickable handoff buttons | Manual copy-paste into new session |
 | Context carry-over | Automatic via handoff prompt | Manual (reference plan file) |
 | Customization | Edit the `.agent.md` files | Edit the prompt text |
-| Functionality | Identical | Identical |
+| LOCKOUT recovery | Click "Fix Issues →" to return to Executor | Manually open new session |
+| Post-review shipping | Shipper agent handles commit/roadmap/postmortem | Manual git commands |
+| Functionality | Identical core pipeline | Identical core pipeline |
 
-> **Both approaches produce the same result.** Pipeline agents just make session transitions smoother. Use whichever you prefer.
+> **Both approaches produce the same result.** Pipeline agents just make session transitions smoother and add automated shipping. Use whichever you prefer.

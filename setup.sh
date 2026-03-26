@@ -380,7 +380,7 @@ if [[ "$PRESET" != "custom" ]]; then
         done < <(find "$SHARED_AGENTS_DIR" -name "*.agent.md" -type f -print0)
     fi
 
-    # Pipeline agents (plan-hardener, executor, reviewer-gate)
+    # Pipeline agents (specifier, plan-hardener, executor, reviewer-gate, shipper)
     PIPELINE_AGENTS_DIR="$TEMPLATE_ROOT/templates/.github/agents"
     if [[ -d "$PIPELINE_AGENTS_DIR" ]]; then
         while IFS= read -r -d '' file; do

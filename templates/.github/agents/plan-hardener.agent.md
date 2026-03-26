@@ -66,6 +66,14 @@ Output a TBD summary table:
 - Do NOT modify files outside the plan document during hardening
 - Do NOT proceed with unresolved TBDs
 
+## OpenBrain Integration (if configured)
+
+If the OpenBrain MCP server is available:
+
+- **Before hardening**: `search_thoughts("<phase topic>", project: "<project>")` — load prior decisions, patterns, and lessons that inform scope and slicing
+- **During TBD resolution**: `search_thoughts("<ambiguous topic>", project: "<project>")` — check if prior decisions already resolve the ambiguity
+- **After hardening**: `capture_thought("Plan hardened: <phase name> — N slices, key decisions: ...", project: "<project>", source: "plan-forge-step-2-hardening")` — persist hardening decisions for the execution session
+
 ## Completion
 
 When all TBDs are resolved and the plan is hardened:

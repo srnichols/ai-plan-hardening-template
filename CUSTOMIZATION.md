@@ -226,20 +226,26 @@ This complements the preset agents — use `/create-agent` for project-specific 
 
 #### Pipeline Agents with Handoffs
 
-The template includes **3 pipeline agents** that automate the Plan → Execute → Review workflow using `handoffs:` — a frontmatter property that wires agent-to-agent transitions with clickable buttons:
+The template includes **5 pipeline agents** that automate the full Specify → Plan → Execute → Review → Ship workflow using `handoffs:` — a frontmatter property that wires agent-to-agent transitions with clickable buttons:
 
 | Agent | Role | Hands Off To |
 |-------|------|-------------|
+| `specifier.agent.md` | Interviews user to define what & why (Step 0) | Plan Hardener |
 | `plan-hardener.agent.md` | Hardens draft plans into execution contracts | Executor |
 | `executor.agent.md` | Executes slices with validation gates | Reviewer Gate |
-| `reviewer-gate.agent.md` | Read-only audit for drift and violations | (terminal) |
+| `reviewer-gate.agent.md` | Read-only audit for drift and violations | Shipper (PASS) / Executor (LOCKOUT) |
+| `shipper.agent.md` | Commits, updates roadmap, captures postmortem, push/PR | (terminal) |
 
 **How handoffs work:**
-1. Start a chat with the Plan Hardener agent
-2. When hardening is complete, a **"Start Execution →"** button appears
-3. Click it to switch to the Executor agent with context carried over
-4. When execution completes, a **"Run Review Gate →"** button appears
-5. Click it to switch to the read-only Reviewer Gate
+1. Start a chat with the Specifier agent — describe your feature idea
+2. When the spec is complete, a **"Start Plan Hardening →"** button appears
+3. Click it to switch to the Plan Hardener agent
+4. When hardening is complete, a **"Start Execution →"** button appears
+5. Click it to switch to the Executor agent with context carried over
+6. When execution completes, a **"Run Review Gate →"** button appears
+7. Click it to switch to the read-only Reviewer Gate
+8. If the review passes, click **"Ship It →"** to switch to the Shipper agent
+9. If the review fails (LOCKOUT), click **"Fix Issues →"** to return to the Executor
 
 The `handoffs:` frontmatter looks like:
 ```yaml

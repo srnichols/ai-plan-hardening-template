@@ -350,9 +350,9 @@ Specialized reviewer and executor roles that agents can adopt. Each agent defini
    Review the authentication flow in src/auth/ for OWASP Top 10 vulnerabilities.
    ```
 
-3. **Pipeline handoff**: When using pipeline agents (Plan Hardener → Executor → Reviewer Gate), click the handoff button that appears after each agent completes. Context carries over automatically.
+3. **Pipeline handoff**: When using pipeline agents (Specifier → Plan Hardener → Executor → Reviewer Gate → Shipper), click the handoff button that appears after each agent completes. Context carries over automatically.
 
-**Available agents** (6 stack-specific + 7 cross-stack + 3 pipeline):
+**Available agents** (6 stack-specific + 7 cross-stack + 5 pipeline):
 | Agent | When to Use |
 |-------|-------------|
 | `architecture-reviewer.agent.md` | Before merging — audit layer separation and patterns |
@@ -368,9 +368,11 @@ Specialized reviewer and executor roles that agents can adopt. Each agent defini
 | `observability-reviewer.agent.md` | After features — logging, tracing, metrics, health checks |
 | `dependency-reviewer.agent.md` | Before merge/release — CVEs, outdated packages, license conflicts |
 | `compliance-reviewer.agent.md` | Data features — GDPR, CCPA, SOC2, PII handling, audit logging |
+| `specifier.agent.md` | Step 0 — interviews user to define what & why (pipeline) |
 | `plan-hardener.agent.md` | Step 2 — hardens plans into execution contracts (pipeline) |
 | `executor.agent.md` | Step 3 — executes slices with validation gates (pipeline) |
 | `reviewer-gate.agent.md` | Step 5 — read-only audit for drift and violations (pipeline) |
+| `shipper.agent.md` | Post-review — commits, updates roadmap, captures postmortem (pipeline) |
 
 #### Skills (`.github/skills/{name}/SKILL.md`)
 

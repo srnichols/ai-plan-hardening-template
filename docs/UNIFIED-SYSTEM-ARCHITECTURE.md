@@ -64,7 +64,7 @@ Rough Idea → Hardened Plan → Slice-by-Slice Execution → Independent Review
 - **6-step pipeline**: Specify → Preflight → Harden → Execute → Sweep → Review
 - **3 isolated sessions**: Plan, Build, Audit (prevents self-review bias)
 - **16 instruction files** per tech stack: architecture, security, testing, database, etc.
-- **16 agents**: 6 stack-specific + 7 cross-stack + 3 pipeline
+- **18 agents**: 6 stack-specific + 7 cross-stack + 5 pipeline
 - **8 skills**: database-migration, staging-deploy, test-sweep, etc.
 - **Lifecycle hooks**: auto-enforce guardrails, format code, catch TODOs
 
@@ -126,7 +126,7 @@ Any Channel → Gateway → Agent Runtime → Tools/Skills → Response → Any 
 │                                                                         │
 │  Plan Forge (methodology + guardrails)                                 │
 │    ├── .github/instructions/ auto-load in VS Code AND Copilot CLI     │
-│    ├── Pipeline agents enforce plan → execute → review                 │
+│    ├── Pipeline agents enforce specify → plan → execute → review → ship │
 │    ├── Lifecycle hooks catch violations automatically                  │
 │    └── Execution slices provide checkpointed progress                  │
 │                                                                         │
@@ -676,12 +676,14 @@ my-api/
 │   │   ├── capture-decision.prompt.md                 ← OpenBrain: structured capture
 │   │   └── ... (14 scaffolding prompts)
 │   ├── agents/
+│   │   ├── specifier.agent.md                         ← Plan Forge: pipeline agent
 │   │   ├── plan-hardener.agent.md                     ← Plan Forge: pipeline agent
 │   │   ├── executor.agent.md                          ← Plan Forge: pipeline agent
 │   │   ├── reviewer-gate.agent.md                     ← Plan Forge: pipeline agent
+│   │   ├── shipper.agent.md                           ← Plan Forge: pipeline agent
 │   │   ├── security-reviewer.agent.md                 ← Plan Forge: stack agent
 │   │   ├── memory-reviewer.agent.md                   ← OpenBrain: decision auditor
-│   │   └── ... (16 total agents)
+│   │   └── ... (18 total agents)
 │   ├── skills/
 │   │   ├── database-migration/SKILL.md                ← Plan Forge: migration skill
 │   │   ├── staging-deploy/SKILL.md                    ← Plan Forge: deploy skill
