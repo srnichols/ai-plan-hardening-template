@@ -8,6 +8,27 @@ applyTo: '**'
 When the OpenBrain MCP server is available, follow these rules to maintain
 long-term project memory across sessions.
 
+## Default Parameters (Auto-Inject on Every Call)
+
+When calling ANY OpenBrain MCP tool (`capture_thought`, `capture_thoughts`,
+`search_thoughts`, `list_thoughts`, `thought_stats`), ALWAYS include these parameters:
+
+| Parameter | Value | Purpose |
+|-----------|-------|--------|
+| `project` | `"<YOUR PROJECT NAME>"` | Isolates this project's memory from others |
+| `created_by` | `"copilot-vscode"` (VS Code) or `"copilot-cli"` (terminal) | Tracks which agent captured or queried the thought |
+| `source` | Derive from context (see below) | Tracks the pipeline step or session that produced it |
+
+### Source Derivation Rules
+
+- During **plan hardening (Step 2)**: `"plan-forge-phase-N-hardening"`
+- During **slice execution (Step 3)**: `"plan-forge-phase-N-slice-K"`
+- During **completeness sweep (Step 4)**: `"phase-N-sweep"`
+- During **review gate (Step 5)**: `"plan-forge-phase-N-review"`
+- During **interactive session** (no pipeline step): `"vscode-copilot-session"`
+
+Never omit `project` or `created_by`. They enable cross-session search and provenance tracking.
+
 ## When to SEARCH OpenBrain
 
 Search for prior decisions and context in these situations:
@@ -33,14 +54,14 @@ Search for prior decisions and context in these situations:
 
 ### Search Examples
 
-Always scope searches to the current project when working in a multi-project environment:
+Always scope searches to the current project:
 
 ```
-search_thoughts("error handling patterns for this project", project: "my-api")
-search_thoughts("database migration decisions", project: "my-api", type: "decision")
-search_thoughts("Phase 3 post-mortem lessons", project: "my-api", type: "postmortem")
-search_thoughts("why did we choose Dapper over EF Core", project: "my-api", type: "architecture")
-search_thoughts("naming conventions", project: "my-api", type: "convention")
+search_thoughts("error handling patterns", project: "<YOUR PROJECT NAME>", created_by: "copilot-vscode")
+search_thoughts("database migration decisions", project: "<YOUR PROJECT NAME>", type: "decision")
+search_thoughts("Phase 3 post-mortem lessons", project: "<YOUR PROJECT NAME>", type: "postmortem")
+search_thoughts("why did we choose Dapper over EF Core", project: "<YOUR PROJECT NAME>", type: "architecture")
+search_thoughts("naming conventions", project: "<YOUR PROJECT NAME>", type: "convention")
 ```
 
 Use `type` filters to narrow results:
@@ -80,22 +101,25 @@ Capture decisions and context in these situations:
 
 ### Capture Format
 
-Always include `project` and `source` for traceability:
+Always include `project`, `created_by`, and `source` for traceability:
 
 ```
 capture_thought(
   "Decision: [WHAT] — [WHY]. Alternatives: [WHAT ELSE]. Context: [PHASE/SLICE]",
-  project: "<current-project>",
+  project: "<YOUR PROJECT NAME>",
+  created_by: "copilot-vscode",
   source: "plan-forge-phase-N-slice-K"
 )
 capture_thought(
   "Pattern: [NAME] — [DESCRIPTION]. Use when: [CONDITION]. Avoid when: [CONDITION]",
-  project: "<current-project>",
+  project: "<YOUR PROJECT NAME>",
+  created_by: "copilot-vscode",
   source: "plan-forge-phase-N"
 )
 capture_thought(
   "Lesson: [WHAT HAPPENED] — [WHAT WE LEARNED]. Applies to: [FUTURE PHASES]",
-  project: "<current-project>",
+  project: "<YOUR PROJECT NAME>",
+  created_by: "copilot-vscode",
   source: "plan-forge-phase-N-postmortem"
 )
 ```
@@ -107,7 +131,8 @@ capture_thoughts([
   "Lesson: [FIRST LESSON]",
   "Lesson: [SECOND LESSON]",
   "Pattern: [PATTERN DISCOVERED]"
-], project: "<current-project>", source: "plan-forge-phase-N-postmortem")
+], project: "<YOUR PROJECT NAME>", created_by: "copilot-vscode",
+   source: "plan-forge-phase-N-postmortem")
 ```
 
 To supersede a prior decision, link to the old one:
@@ -115,7 +140,8 @@ To supersede a prior decision, link to the old one:
 ```
 capture_thought(
   "Decision: Switched from Redis to Memcached for caching. Reason: simpler ops.",
-  project: "<current-project>",
+  project: "<YOUR PROJECT NAME>",
+  created_by: "copilot-vscode",
   source: "plan-forge-phase-N-slice-K",
   supersedes: "<uuid-of-old-decision>"
 )

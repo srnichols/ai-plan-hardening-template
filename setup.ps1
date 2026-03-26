@@ -434,16 +434,51 @@ if ($InstallExtensions) {
         Get-ChildItem -Path $extDir -Directory | Where-Object {
             Test-Path (Join-Path $_.FullName "extension.json")
         } | ForEach-Object {
-            $manifest = Get-Content (Join-Path $_.FullName "extension.json") -Raw | ConvertFrom-Json
+            $extFullName = $_.FullName
+            $manifest = Get-Content (Join-Path $extFullName "extension.json") -Raw | ConvertFrom-Json
             Write-Host "  Installing: $($manifest.name) v$($manifest.version)" -ForegroundColor Magenta
 
             @('instructions', 'agents', 'prompts') | ForEach-Object {
-                $srcSubDir = Join-Path $_.FullName $_
+                $srcSubDir = Join-Path $extFullName $_
                 if (Test-Path $srcSubDir) {
                     $destBase = Join-Path $ProjectPath ".github/$_"
                     Get-ChildItem -Path $srcSubDir -File | ForEach-Object {
                         $dst = Join-Path $destBase $_.Name
                         Copy-WithCreate $_.FullName $dst $Force.IsPresent
+                    }
+                }
+            }
+
+            # Merge MCP server config if extension declares one
+            if ($manifest.files.mcp) {
+                $mcpSrc = Join-Path $extFullName $manifest.files.mcp
+                if (Test-Path $mcpSrc) {
+                    $mcpDst = Join-Path $ProjectPath ".vscode/mcp.json"
+                    $mcpSrcJson = Get-Content $mcpSrc -Raw | ConvertFrom-Json
+
+                    if (Test-Path $mcpDst) {
+                        $mcpDstJson = Get-Content $mcpDst -Raw | ConvertFrom-Json
+                        if (-not $mcpDstJson.servers) {
+                            $mcpDstJson | Add-Member -NotePropertyName 'servers' -NotePropertyValue ([PSCustomObject]@{}) -Force
+                        }
+                        foreach ($serverName in $mcpSrcJson.servers.PSObject.Properties.Name) {
+                            if (-not $mcpDstJson.servers.PSObject.Properties[$serverName]) {
+                                $mcpDstJson.servers | Add-Member -NotePropertyName $serverName -NotePropertyValue $mcpSrcJson.servers.$serverName -Force
+                                Write-Host "  MERGE  .vscode/mcp.json → added '$serverName' server" -ForegroundColor Green
+                            }
+                            else {
+                                Write-Host "  SKIP   .vscode/mcp.json → '$serverName' server already exists" -ForegroundColor Yellow
+                            }
+                        }
+                        $mcpDstJson | ConvertTo-Json -Depth 10 | Set-Content $mcpDst
+                    }
+                    else {
+                        $vscodeDir = Join-Path $ProjectPath ".vscode"
+                        if (-not (Test-Path $vscodeDir)) {
+                            New-Item -ItemType Directory -Path $vscodeDir -Force | Out-Null
+                        }
+                        Copy-Item $mcpSrc $mcpDst
+                        Write-Host "  CREATE .vscode/mcp.json" -ForegroundColor Green
                     }
                 }
             }

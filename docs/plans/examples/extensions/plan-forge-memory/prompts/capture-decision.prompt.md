@@ -53,7 +53,8 @@ to store a decision, pattern, or lesson for future sessions.
 3. **Confirm with the user** before capturing
 
 4. **Call `capture_thought`** with the structured content, always including:
-   - `project`: The current project name (ask the user if unknown)
+   - `project`: `"<YOUR PROJECT NAME>"` (the current project)
+   - `created_by`: `"copilot-vscode"` (or `"copilot-cli"` if in terminal)
    - `source`: Where this decision came from (e.g., `"plan-forge-phase-4-slice-2"`)
 
 5. **If capturing multiple thoughts at once** (e.g., post-mortem), use `capture_thoughts` (batch):
@@ -62,14 +63,16 @@ to store a decision, pattern, or lesson for future sessions.
      "Decision: ...",
      "Lesson: ...",
      "Pattern: ..."
-   ], project: "my-api", source: "phase-4-postmortem")
+   ], project: "<YOUR PROJECT NAME>", created_by: "copilot-vscode",
+      source: "phase-4-postmortem")
    ```
 
 6. **If this supersedes a prior decision**, search first and link:
    ```
-   search_thoughts("caching strategy", project: "my-api", type: "decision")
+   search_thoughts("caching strategy", project: "<YOUR PROJECT NAME>", type: "decision")
    # Found old decision with id: abc-123
-   capture_thought("Decision: [NEW]", project: "my-api", supersedes: "abc-123")
+   capture_thought("Decision: [NEW]", project: "<YOUR PROJECT NAME>",
+     created_by: "copilot-vscode", supersedes: "abc-123")
    ```
    Or update the old thought in place with `update_thought`.
 

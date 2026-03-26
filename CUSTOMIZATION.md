@@ -524,23 +524,20 @@ Plan Forge's 3-session model is powerful, but each session starts fresh. [OpenBr
 
 ### Setup
 
-1. **Deploy OpenBrain** — [Docker Compose](https://github.com/srnichols/OpenBrain) (local), Supabase (cloud), or Kubernetes (production)
-2. **Configure MCP** — Add to `.vscode/mcp.json`:
-   ```json
-   {
-     "servers": {
-       "openbrain": {
-         "type": "sse",
-         "url": "http://localhost:8080/sse",
-         "headers": { "x-brain-key": "${env:OPENBRAIN_KEY}" }
-       }
-     }
-   }
-   ```
-3. **Install the extension**:
+1. **Deploy OpenBrain** — [Docker Compose](https://github.com/srnichols/OpenBrain) (local), Supabase (cloud), Azure Container Apps (`deploy/azure/main.bicep`), or Kubernetes (production)
+2. **Install the extension** (auto-configures `.vscode/mcp.json`):
    ```bash
    pforge ext install docs/plans/examples/extensions/plan-forge-memory
    ```
+3. **Set your MCP key** — The install adds the OpenBrain server to `.vscode/mcp.json` pointing to `localhost:8080`. Set the key:
+   ```bash
+   # Linux / macOS
+   export OPENBRAIN_KEY=your-mcp-access-key
+
+   # Windows (PowerShell)
+   $env:OPENBRAIN_KEY = "your-mcp-access-key"
+   ```
+   If OpenBrain runs on a different host, edit the `url` in `.vscode/mcp.json`.
 
 ### What It Adds
 

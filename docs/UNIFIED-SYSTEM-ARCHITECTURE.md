@@ -2,7 +2,7 @@
 
 > **Purpose**: A complete reference for integrating Plan Forge, OpenBrain, and OpenClaw into a single automated development system — where AI agents plan, build, remember, and communicate across every surface you use.
 >
-> **Last Updated**: 2026-03-24
+> **Last Updated**: 2026-03-26
 
 ---
 
@@ -21,6 +21,7 @@
 - [VS Code Copilot Integration](#vs-code-copilot-integration)
 - [Copilot CLI Integration](#copilot-cli-integration)
 - [OpenBrain as Shared Memory Fabric](#openbrain-as-shared-memory-fabric)
+  - [Automatic Parameter Injection](#automatic-parameter-injection)
 - [Session Management: The 3-Session Model Enhanced](#session-management-the-3-session-model-enhanced)
 - [Notification and Approval Flows](#notification-and-approval-flows)
 - [Security Model](#security-model)
@@ -77,9 +78,12 @@ Thought → Embedding → pgvector → Searchable by meaning forever
 - **7 MCP tools**: capture_thought, search_thoughts, list_thoughts, thought_stats, update_thought, delete_thought, capture_thoughts (batch)
 - **8 REST endpoints**: full HTTP API for non-MCP integrations
 - **Auto-metadata extraction**: LLM classifies type, topics, people, action items
+- **User provenance**: `created_by` tracks which user or agent captured each thought
 - **Project scoping**: isolate memory per project, no cross-contamination
+- **Source tracking**: `source` field records the channel/step that produced each thought
 - **Decision linking**: `supersedes` field chains decision evolution
-- **Self-hosted**: PostgreSQL + pgvector + Ollama, zero cloud dependency
+- **3 embedder providers**: Ollama (local/free), OpenRouter (cloud), Azure OpenAI (enterprise)
+- **Self-hosted or Azure**: Docker, Kubernetes, or Azure Container Apps (`deploy/azure/main.bicep`)
 
 ### OpenClaw — The Always-On AI Gateway
 
@@ -215,6 +219,7 @@ graph TB
 | Execute code changes | — | — | — | ✅ Primary |
 | Capture decisions | ✅ Auto-capture | ✅ Extension triggers | ✅ Primary storage | ✅ Via MCP |
 | Search prior context | ✅ Via skill | ✅ Extension triggers | ✅ Primary search | ✅ Via MCP |
+| Inject project/user/source | ✅ Via skill env vars | ✅ Via instruction files | ✅ Stores & indexes | ✅ Reads instruction defaults |
 | Notify developer | ✅ Primary | — | — | — |
 | Manage sessions | ✅ Multi-agent | ✅ 3-session model | — | — |
 | Approve/reject work | ✅ Chat-based | ✅ Gate validation | — | ✅ UI-based |
@@ -238,7 +243,7 @@ sequenceDiagram
     Dev->>OC: "Build user profile API for my-api project"
     
     Note over OC: Skill: plan-forge-orchestrator
-    OC->>OB: search_thoughts("user profile", project: "my-api")
+    OC->>OB: search_thoughts("user profile", project: "my-api", created_by: "copilot-cli-acp")
     OB-->>OC: 3 prior decisions found
     
     OC->>OC: Write context briefing file
@@ -257,7 +262,7 @@ sequenceDiagram
     loop Each Slice
         OC->>CLI: ACP: prompt("Execute Slice N...")
         CLI->>CLI: Writes code, runs tests
-        CLI->>OB: capture_thought("Slice N decision...")
+        CLI->>OB: capture_thought("Slice N decision...", created_by: "copilot-cli-acp")
         CLI-->>OC: ACP: sessionUpdate (complete)
         OC->>Dev: "Slice N done. Tests pass. ✓"
     end
@@ -272,7 +277,7 @@ sequenceDiagram
     OC->>Dev: "Review complete. 0 drift violations. Ship it?"
     Dev->>OC: "Ship it"
     OC->>CLI: ACP: prompt("Commit and push")
-    OC->>OB: capture_thoughts(batch postmortem)
+    OC->>OB: capture_thoughts(batch postmortem, created_by: "copilot-cli-acp")
     OC->>Dev: "Pushed to main. PR created."
 ```
 
@@ -603,7 +608,11 @@ For teams that don't want to maintain on-prem infrastructure, OpenBrain can run 
 
 **One-click deploy** (from the [OpenBrain repo](https://github.com/srnichols/OpenBrain)):
 
-[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fsrnichols%2FOpenBrain%2Fmaster%2Finfra%2Fazuredeploy.json)
+**Via the provided deploy script (recommended):**
+```powershell
+cd OpenBrain
+.\deploy\azure\deploy.ps1 -ResourceGroup rg-openbrain -Location eastus2
+```
 
 **Or via Azure Developer CLI:**
 ```bash
@@ -615,11 +624,11 @@ azd up
 ```bash
 az deployment group create \
   --resource-group rg-openbrain \
-  --template-file infra/main.bicep \
+  --template-file deploy/azure/main.bicep \
   --parameters location=eastus2
 ```
 
-The Bicep template provisions all resources, runs the database init script, deploys the container, and outputs the MCP endpoint URL. You then configure it in your MCP clients:
+The Bicep template (`deploy/azure/main.bicep`) provisions all resources, runs the database init script, deploys the container, and outputs the MCP endpoint URL. You then configure it in your MCP clients:
 
 ```json
 {
@@ -866,12 +875,15 @@ When you're at your desk in VS Code, the system works through MCP and instructio
 │     └── persistent-memory.instructions.md (always)       │
 │                                                          │
 │  4. persistent-memory.instructions.md triggers:          │
-│     → search_thoughts("prior context", project: "my-api")│
+│     → search_thoughts("prior context", project: "my-api",│
+│         created_by: "copilot-vscode")                     │
 │     → Prior decisions loaded into session context         │
 │                                                          │
 │  5. Copilot hardens the plan following Plan Forge rules   │
 │  6. On completion:                                        │
-│     → capture_thought("Decision: X", project: "my-api")  │
+│     → capture_thought("Decision: X", project: "my-api",  │
+│         created_by: "copilot-vscode",                     │
+│         source: "plan-forge-phase-4-hardening")           │
 │     → Stored in OpenBrain with auto-metadata             │
 │                                                          │
 │  7. Start new chat session (Session 2)                    │
@@ -970,48 +982,138 @@ graph TB
     end
 ```
 
+### Automatic Parameter Injection
+
+OpenBrain's `project`, `created_by`, and `source` parameters are **required for useful provenance** but tedious to pass manually every call. The unified system auto-injects them so AI agents and developers never need to remember.
+
+#### The Problem
+
+Without auto-injection, every capture call must include 3 optional-but-critical fields:
+
+```
+capture_thought("We chose CQRS for reads",
+  project: "my-api",           ← easy to forget
+  created_by: "copilot-cli",   ← agent doesn't know who it is
+  source: "plan-forge-phase-4" ← agent doesn't know the pipeline step
+)
+```
+
+If any are omitted, the thought is orphaned — unsearchable by project, unattributable by user, untraceable by origin.
+
+#### The Solution: 3 Injection Points
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│  Injection Point 1: OpenClaw Skill Config (env vars)                │
+│                                                                      │
+│  Skills inject DEFAULT_PROJECT, DEFAULT_USER, and derive SOURCE      │
+│  from the channel + pipeline step automatically.                     │
+│  → REST calls to /memories always include project + created_by       │
+│                                                                      │
+├─────────────────────────────────────────────────────────────────────┤
+│  Injection Point 2: persistent-memory.instructions.md                │
+│                                                                      │
+│  The instruction file tells Copilot (VS Code or CLI):                │
+│  "Always pass project: '<project-name>' and                          │
+│   created_by: 'copilot-vscode' or 'copilot-cli' and                 │
+│   source: '<current-pipeline-step>' on every capture/search call."   │
+│  → MCP calls from Copilot always include all 3 params               │
+│                                                                      │
+├─────────────────────────────────────────────────────────────────────┤
+│  Injection Point 3: ACP Session Init (Copilot CLI)                   │
+│                                                                      │
+│  OpenClaw passes project + user context in the ACP prompt prefix:    │
+│  "You are working on project 'my-api'. Your identity for OpenBrain   │
+│   is 'copilot-cli'. The current pipeline step is 'phase-4-slice-2'."│
+│  → Copilot CLI sessions always have the context to fill params       │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+#### Parameter Defaults by Surface
+
+| Surface | `project` | `created_by` | `source` |
+|---------|-----------|-------------|----------|
+| **VS Code Copilot** | From `persistent-memory.instructions.md` (set per workspace) | `"copilot-vscode"` | Pipeline step name from active prompt file |
+| **Copilot CLI (interactive)** | From `.github/copilot-instructions.md` | `"copilot-cli"` | `"copilot-cli-interactive"` |
+| **Copilot CLI (ACP via OpenClaw)** | From skill env `DEFAULT_PROJECT` | `"copilot-cli-acp"` | Auto-derived: `"plan-forge-{phase}-{step}"` |
+| **OpenClaw skill (direct REST)** | From skill env `DEFAULT_PROJECT` | `"openclaw-{channel}"` (e.g. `openclaw-whatsapp`) | `"{channel}-{date}"` (e.g. `slack-2026-03-24`) |
+| **Manual curl** | Must pass explicitly | Must pass explicitly | Must pass explicitly |
+
+#### persistent-memory.instructions.md Template
+
+The Plan Forge memory extension's instruction file should include these defaults:
+
+```markdown
+## OpenBrain Defaults for This Project
+
+When calling ANY OpenBrain MCP tool (capture_thought, capture_thoughts,
+search_thoughts, list_thoughts, thought_stats), ALWAYS include:
+
+- **project**: "my-api"
+- **created_by**: "copilot-vscode" (or "copilot-cli" if running in terminal)
+- **source**: Use the current pipeline step if known (e.g. "plan-forge-phase-4-slice-2"),
+  otherwise use "vscode-copilot-session"
+
+Never omit these parameters. They enable cross-session search and provenance tracking.
+```
+
 ### Thought Lifecycle Across the Pipeline
+
+All three parameters (`project`, `created_by`, `source`) are auto-injected per the [Automatic Parameter Injection](#automatic-parameter-injection) strategy above. The examples below show actual wire-level calls.
 
 ```
 Plan Forge Step 0 (Specify)
   └─► capture_thought("Feature: User profile API with tenant isolation",
-        project: "my-api", source: "step-0-spec")
+        project: "my-api", created_by: "copilot-vscode",
+        source: "step-0-spec")
 
 Plan Forge Step 2 (Harden)
-  ├─► search_thoughts("user profile", project: "my-api")
+  ├─► search_thoughts("user profile", project: "my-api",
+  │     created_by: "copilot-vscode")
   │     → Returns specs, prior patterns, known issues
   └─► capture_thought("Decision: Use CQRS for profile reads vs writes",
-        project: "my-api", source: "plan-forge-phase-4-hardening")
+        project: "my-api", created_by: "copilot-vscode",
+        source: "plan-forge-phase-4-hardening")
 
 Plan Forge Step 3 (Execute) — per slice
   ├─► search_thoughts("CQRS patterns", project: "my-api", type: "pattern")
   │     → Returns implementation patterns from prior phases
   └─► capture_thought("Slice 2: Implemented UserProfileQueryHandler",
-        project: "my-api", source: "plan-forge-phase-4-slice-2")
+        project: "my-api", created_by: "copilot-cli-acp",
+        source: "plan-forge-phase-4-slice-2")
 
 Plan Forge Step 4 (Sweep)
   └─► capture_thoughts([
         "Lesson: Query handler tests need both happy path and empty result",
         "Pattern: All query handlers return Option<T>, never null",
         "Convention: Handler names: {Entity}{Operation}Handler"
-      ], project: "my-api", source: "phase-4-sweep")
+      ], project: "my-api", created_by: "copilot-cli-acp",
+         source: "phase-4-sweep")
 
 Plan Forge Step 5 (Review)
   ├─► search_thoughts("all Phase 4 decisions", project: "my-api")
   │     → Full decision trail for independent audit
   └─► capture_thought("Review: Phase 4 passed. 0 drift violations.",
-        project: "my-api", source: "plan-forge-phase-4-review")
+        project: "my-api", created_by: "copilot-cli-acp",
+        source: "plan-forge-phase-4-review")
 
-OpenClaw (anytime, any channel)
+OpenClaw (anytime, any channel — auto-injected by skill)
   ├─► "Search brain for profile API decisions"
+  │     → search_thoughts("profile API", project: "my-api",
+  │         created_by: "openclaw-whatsapp")
   │     → Returns all 8+ thoughts from the phase
   └─► "Capture: Team decided to add profile image upload in Phase 5"
-        → Stored with channel provenance
+        → capture_thought(..., project: "my-api",
+            created_by: "openclaw-whatsapp",
+            source: "whatsapp-2026-03-24")
 ```
 
 ### Provenance Tracking
 
-Every thought in OpenBrain includes a `source` field that tracks where and when it was captured:
+Every thought in OpenBrain includes two provenance fields — `source` (what step/channel produced it) and `created_by` (which user or agent captured it):
+
+#### `source` — Where and when
 
 | Source Pattern | Meaning |
 |---------------|---------|
@@ -1025,6 +1127,22 @@ Every thought in OpenBrain includes a `source` field that tracks where and when 
 | `whatsapp-quick-note` | Captured from WhatsApp via OpenClaw |
 | `openclaw-voice-2026-03-24` | Captured via OpenClaw Talk Mode |
 | `code-review-pr-142` | Captured during a code review |
+
+#### `created_by` — Who captured it
+
+| Identity Pattern | Surface |
+|-----------------|---------|
+| `copilot-vscode` | Copilot in VS Code (Agent Mode) |
+| `copilot-cli` | Copilot CLI interactive session |
+| `copilot-cli-acp` | Copilot CLI driven by OpenClaw via ACP |
+| `openclaw-whatsapp` | OpenClaw skill triggered from WhatsApp |
+| `openclaw-slack` | OpenClaw skill triggered from Slack |
+| `openclaw-telegram` | OpenClaw skill triggered from Telegram |
+| `openclaw-voice` | OpenClaw Talk Mode (voice dictation) |
+| `manual` | Direct curl / REST API call |
+| `ci-pipeline` | Automated CI/CD capture (future) |
+
+Both fields are auto-injected — see [Automatic Parameter Injection](#automatic-parameter-injection).
 
 ---
 
@@ -1184,6 +1302,7 @@ OpenClaw: 🛑 Execution halted.
 │  OpenBrain                                                  │
 │    Auth: MCP_ACCESS_KEY (per-server)                        │
 │    Scope: Project-scoped queries (no cross-project leaks)   │
+│    Provenance: created_by tracks which agent captured data   │
 │    Network: Loopback only (or Tailscale for remote)         │
 │    DB: Row-Level Security on thoughts table                 │
 │                                                             │
@@ -1199,11 +1318,12 @@ OpenClaw: 🛑 Execution halted.
 
 1. **OpenClaw never executes code directly** — it delegates to Copilot CLI with scoped tool permissions
 2. **Copilot CLI runs with least privilege** — `--deny-tool` blocks destructive operations
-3. **OpenBrain data stays local** — self-hosted PostgreSQL, Ollama embeddings, no cloud
+3. **OpenBrain data stays local** — self-hosted PostgreSQL, Ollama embeddings, no cloud (or Azure-hosted with your own tenant)
 4. **Network boundaries** — all services bind to loopback; Tailscale for remote access
 5. **MCP keys rotate** — `openssl rand -hex 32` for key generation
 6. **Project isolation** — OpenBrain queries scoped by `project` parameter
-7. **Session isolation** — each ACP session has independent context (no bleed)
+7. **User attribution** — `created_by` field tracks which agent/user captured each thought
+8. **Session isolation** — each ACP session has independent context (no bleed)
 8. **Approval gates** — destructive actions (push, deploy) require explicit approval via chat
 
 ---
@@ -1232,6 +1352,8 @@ OpenClaw: 🛑 Execution halted.
   },
 
   // Skills configuration
+  // DEFAULT_PROJECT + DEFAULT_USER are auto-injected into every
+  // OpenBrain call. Source is auto-derived from channel + timestamp.
   "skills": {
     "entries": {
       "plan-forge-orchestrator": {
@@ -1240,21 +1362,26 @@ OpenClaw: 🛑 Execution halted.
           "OPENBRAIN_KEY": "your-openbrain-mcp-key",
           "OPENBRAIN_URL": "http://localhost:8080",
           "OPENBRAIN_REST": "http://localhost:8000",
-          "DEFAULT_PROJECT": "my-api"
+          "DEFAULT_PROJECT": "my-api",
+          "DEFAULT_USER": "copilot-cli-acp"
         }
       },
       "openbrain-capture": {
         "enabled": true,
         "env": {
           "OPENBRAIN_KEY": "your-openbrain-mcp-key",
-          "OPENBRAIN_REST": "http://localhost:8000"
+          "OPENBRAIN_REST": "http://localhost:8000",
+          "DEFAULT_PROJECT": "my-api",
+          "DEFAULT_USER": "openclaw-${CHANNEL}"
         }
       },
       "openbrain-search": {
         "enabled": true,
         "env": {
           "OPENBRAIN_KEY": "your-openbrain-mcp-key",
-          "OPENBRAIN_REST": "http://localhost:8000"
+          "OPENBRAIN_REST": "http://localhost:8000",
+          "DEFAULT_PROJECT": "my-api",
+          "DEFAULT_USER": "openclaw-${CHANNEL}"
         }
       }
     }

@@ -1,0 +1,8 @@
+{
+  "servers": {
+    "openbrain": {
+      "type": "sse",
+      "url": "http://localhost:8080/sse?key=${env:OPENBRAIN_KEY}"
+    }
+  }
+}

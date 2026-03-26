@@ -19,7 +19,8 @@ that stores decisions, patterns, and lessons from all prior sessions.
 
 2. **Search OpenBrain** using the `search_thoughts` tool with their query.
    Use natural language — the search is semantic, not keyword-based.
-   - Always include `project` to scope results to the current project
+   - Always include `project`: `"<YOUR PROJECT NAME>"`
+   - Always include `created_by`: `"copilot-vscode"` (or `"copilot-cli"` if in terminal)
    - Use `type` to narrow results (e.g., `"decision"`, `"architecture"`, `"postmortem"`, `"pattern"`, `"convention"`)
    - Use `topic` to filter by tag when the user mentions a specific area
 
@@ -36,12 +37,12 @@ that stores decisions, patterns, and lessons from all prior sessions.
 ## Example Searches
 
 ```
-search_thoughts("error handling patterns for API endpoints", project: "my-api", type: "pattern")
-search_thoughts("database migration decisions from Phase 2", project: "my-api", type: "decision")
-search_thoughts("why we rejected Entity Framework", project: "my-api", type: "architecture")
-search_thoughts("authentication architecture decisions", project: "my-api", type: "architecture")
-search_thoughts("performance lessons", project: "my-api", type: "postmortem")
-search_thoughts("caching strategy", project: "my-api", type: "decision")
+search_thoughts("error handling patterns for API endpoints", project: "<YOUR PROJECT NAME>", type: "pattern")
+search_thoughts("database migration decisions from Phase 2", project: "<YOUR PROJECT NAME>", type: "decision")
+search_thoughts("why we rejected Entity Framework", project: "<YOUR PROJECT NAME>", type: "architecture")
+search_thoughts("authentication architecture decisions", project: "<YOUR PROJECT NAME>", type: "architecture")
+search_thoughts("performance lessons", project: "<YOUR PROJECT NAME>", type: "postmortem")
+search_thoughts("caching strategy", project: "<YOUR PROJECT NAME>", type: "decision")
 ```
 
 ## Output Format

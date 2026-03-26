@@ -25,44 +25,49 @@ OpenBrain solves this by giving every AI session access to a **shared, searchabl
 
 ## Prerequisites
 
-1. **OpenBrain running** — Local Docker or Kubernetes deployment
+1. **OpenBrain running** — Local Docker, Kubernetes, or Azure Container Apps deployment
    - See [OpenBrain setup guide](https://github.com/srnichols/OpenBrain)
    - Requires the **dev-ready upgrade** (v1.1+) for project scoping, batch capture, and thought mutation
-2. **MCP configured** — OpenBrain MCP server accessible from your AI client
-3. **Plan Forge installed** — This extension adds to an existing Plan Forge project
+2. **Plan Forge installed** — This extension adds to an existing Plan Forge project
 
-### MCP Configuration
+### MCP Configuration (Automatic)
 
-Add OpenBrain to your VS Code MCP settings (`.vscode/mcp.json`):
+The extension includes an `mcp.json` that is **automatically merged** into `.vscode/mcp.json` when you install via `pforge ext install` or `setup.ps1 -InstallExtensions`. The default config points to `localhost:8080`.
 
+The only manual step is setting the environment variable:
+```bash
+# Linux / macOS
+export OPENBRAIN_KEY=your-mcp-access-key
+
+# Windows (PowerShell)
+$env:OPENBRAIN_KEY = "your-mcp-access-key"
+```
+
+If OpenBrain runs on a different host (e.g. Azure, remote server via Tailscale), edit the `url` in `.vscode/mcp.json`:
 ```json
 {
   "servers": {
     "openbrain": {
       "type": "sse",
-      "url": "http://<host>:8080/sse?key=${env:OPENBRAIN_KEY}"
+      "url": "https://openbrain-api.<region>.azurecontainerapps.io/sse?key=${env:OPENBRAIN_KEY}"
     }
   }
 }
 ```
 
-Set the environment variable:
-```bash
-export OPENBRAIN_KEY=your-mcp-access-key
-```
-
 ## Installation
+
+### Using CLI (recommended — auto-configures mcp.json)
+```bash
+pforge ext install docs/plans/examples/extensions/plan-forge-memory
+```
 
 ### Manual
 ```bash
 cp instructions/* .github/instructions/
 cp agents/* .github/agents/
 cp prompts/* .github/prompts/
-```
-
-### Using CLI
-```bash
-pforge ext install docs/plans/examples/extensions/plan-forge-memory
+cp mcp.json .vscode/mcp.json  # or merge into existing
 ```
 
 ## How It Works in Practice
@@ -70,7 +75,8 @@ pforge ext install docs/plans/examples/extensions/plan-forge-memory
 ### Session 1 (Plan Hardening)
 ```
 Agent starts → SessionStart searches OpenBrain:
-  search_thoughts("Prior decisions for this project?", project: "my-api")
+  search_thoughts("Prior decisions for this project?", project: "my-api",
+    created_by: "copilot-vscode")
   → Found: 5 architectural decisions from Phase 2
   → Found: 2 post-mortem lessons from Phase 3
   → Context loaded automatically
@@ -79,6 +85,7 @@ Agent hardens plan → Captures new decisions:
   capture_thought(
     "Decision: Use branch-per-slice for Phase 4 (high risk)",
     project: "my-api",
+    created_by: "copilot-vscode",
     source: "plan-forge-phase-4-hardening"
   )
   → Stored in OpenBrain with topics, rationale, alternatives
@@ -95,6 +102,7 @@ After each slice → Auto-captures:
   capture_thought(
     "Slice 3 complete: Added UserProfileRepository with Dapper",
     project: "my-api",
+    created_by: "copilot-vscode",
     source: "plan-forge-phase-4-slice-3"
   )
   → Stored with slice number, phase, outcome

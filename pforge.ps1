@@ -507,6 +507,42 @@ function Invoke-ExtInstall([string[]]$args_) {
         }
     }
 
+    # Merge MCP server config if extension declares one
+    if ($manifest.files.mcp) {
+        $mcpSrc = Join-Path $destDir $manifest.files.mcp
+        if (Test-Path $mcpSrc) {
+            $mcpDst = Join-Path $RepoRoot ".vscode/mcp.json"
+            $mcpSrcJson = Get-Content $mcpSrc -Raw | ConvertFrom-Json
+
+            if (Test-Path $mcpDst) {
+                # Merge: add new servers without overwriting existing ones
+                $mcpDstJson = Get-Content $mcpDst -Raw | ConvertFrom-Json
+                if (-not $mcpDstJson.servers) {
+                    $mcpDstJson | Add-Member -NotePropertyName 'servers' -NotePropertyValue ([PSCustomObject]@{}) -Force
+                }
+                foreach ($serverName in $mcpSrcJson.servers.PSObject.Properties.Name) {
+                    if (-not $mcpDstJson.servers.PSObject.Properties[$serverName]) {
+                        $mcpDstJson.servers | Add-Member -NotePropertyName $serverName -NotePropertyValue $mcpSrcJson.servers.$serverName -Force
+                        Write-Host "  MERGE  .vscode/mcp.json → added '$serverName' server" -ForegroundColor Green
+                    }
+                    else {
+                        Write-Host "  SKIP   .vscode/mcp.json → '$serverName' server already exists" -ForegroundColor Yellow
+                    }
+                }
+                $mcpDstJson | ConvertTo-Json -Depth 10 | Set-Content $mcpDst
+            }
+            else {
+                # No existing mcp.json — just copy it
+                $vscodeDir = Join-Path $RepoRoot ".vscode"
+                if (-not (Test-Path $vscodeDir)) {
+                    New-Item -ItemType Directory -Path $vscodeDir -Force | Out-Null
+                }
+                Copy-Item $mcpSrc $mcpDst
+                Write-Host "  CREATE .vscode/mcp.json" -ForegroundColor Green
+            }
+        }
+    }
+
     # Update extensions.json
     $extJsonPath = Join-Path $RepoRoot ".forge/extensions/extensions.json"
     if (Test-Path $extJsonPath) {
