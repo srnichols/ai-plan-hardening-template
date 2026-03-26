@@ -515,6 +515,39 @@ Type `/` in the chat input to see these alongside your prompt templates. Add `us
 
 Plan Forge's 3-session model is powerful, but each session starts fresh. [OpenBrain](https://github.com/srnichols/OpenBrain) adds **persistent semantic memory** — decisions, patterns, and lessons captured in one session are searchable in every future session, across any AI tool.
 
+### Why This Changes Everything
+
+Without memory, every session re-discovers what previous sessions already knew. Post-mortems sit in Markdown files nobody re-reads. The same mistakes repeat because lessons are effectively write-only.
+
+With OpenBrain installed, knowledge **compounds across phases**:
+
+```
+Phase 1:  0 prior thoughts  →  captures 8 decisions
+Phase 2:  8 thoughts loaded  →  avoids 2 prior mistakes, captures 12 more
+Phase 3:  20 thoughts loaded →  reuses 3 patterns, captures 10 more
+Phase 5:  40+ thoughts       →  agent has full project context from day one
+```
+
+Each phase costs less in rework because the agent already knows what worked, what failed, and why. A new team member (or a fresh Copilot session) gets the same institutional knowledge as someone who was there from the start.
+
+### What Integrates with OpenBrain
+
+When the extension is installed, **every pipeline touchpoint** participates — not just the extension files:
+
+| Component | Search Before | Capture After |
+|-----------|--------------|---------------|
+| **7 pipeline prompts** (step0–step6) | ✅ Prior decisions, patterns, lessons | ✅ Specs, plans, reviews, postmortems |
+| **5 pipeline agents** (specifier → shipper) | ✅ Phase context, TBD resolution | ✅ Decisions, outcomes, verdicts |
+| **SessionStart hook** | ✅ Reminds agent to search on session open | — |
+| **Stop hook** | — | ✅ Reminds agent to capture before ending |
+| **8 skills × 5 presets** (40 files) | ✅ Prior failures, patterns, conventions | ✅ Outcomes, recurring issues |
+
+All calls include `project`, `created_by`, and `source` for full provenance tracking.
+
+### What it costs: Zero if not installed
+
+Every integration is gated behind "if OpenBrain is configured." Without it, prompts, agents, hooks, and skills work identically. There is no new dependency or behavior change for users who don't opt in.
+
 ### When This Matters
 
 - **Long-running projects** — "Why did we decide X three months ago?"

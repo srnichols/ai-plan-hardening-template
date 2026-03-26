@@ -16,12 +16,29 @@ OpenBrain solves this by giving every AI session access to a **shared, searchabl
 
 ## What's Included
 
+This extension adds 4 files, but the memory integration extends **across the entire pipeline**:
+
+### Extension Files (installed by `pforge ext install`)
+
 | Type | File | Purpose |
 |------|------|---------|
-| **Instruction** | `persistent-memory.instructions.md` | Rules for when to search and capture decisions |
+| **Instruction** | `persistent-memory.instructions.md` | Default parameters + rules for when to search and capture |
 | **Agent** | `memory-reviewer.agent.md` | Audits whether key decisions were captured |
 | **Prompt** | `search-project-history.prompt.md` | Search OpenBrain for prior decisions and context |
 | **Prompt** | `capture-decision.prompt.md` | Structured decision capture with context and rationale |
+| **Config** | `mcp.json` | Auto-merged into `.vscode/mcp.json` on install |
+
+### Pipeline Files (already memory-aware, activated when OpenBrain is configured)
+
+| Component | Count | Memory Behavior |
+|-----------|-------|-----------------|
+| **Pipeline prompts** (step0–step6) | 7 | Search before, capture after each step |
+| **Pipeline agents** (specifier → shipper) | 5 | Search for context + capture decisions at each stage |
+| **SessionStart hook** | 1 | Injects reminder to search OpenBrain on session open |
+| **Stop hook** | 1 | Reminds agent to capture decisions before session ends |
+| **Skills** (all presets) | 40 | Each skill searches prior patterns and captures outcomes |
+
+All calls include `project`, `created_by`, and `source` for full provenance.
 
 ## Prerequisites
 
@@ -69,6 +86,19 @@ cp agents/* .github/agents/
 cp prompts/* .github/prompts/
 cp mcp.json .vscode/mcp.json  # or merge into existing
 ```
+
+## The Compounding Effect
+
+Unlike static documentation, OpenBrain knowledge **compounds across phases**:
+
+```
+Phase 1:  0 prior thoughts  →  captures 8 decisions
+Phase 2:  8 thoughts loaded  →  avoids 2 prior mistakes, captures 12 more
+Phase 3:  20 thoughts loaded →  reuses 3 patterns, captures 10 more
+Phase 5:  40+ thoughts       →  agent has full project context from day one
+```
+
+Each phase costs less in rework because the agent already knows what worked, what failed, and why. A new team member (or a fresh Copilot session) gets the same institutional knowledge as someone who was there from the start — via a single `search_thoughts()` call.
 
 ## How It Works in Practice
 
