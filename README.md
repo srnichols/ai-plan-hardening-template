@@ -13,7 +13,9 @@
 ## Start Here
 
 | You are... | Start with |
-|------------|-----------|| **Brand new to AI guardrails** | Read [What Is This?](#what-is-this-plain-english) → Run [`setup.ps1`](#2-run-the-setup-wizard) → Follow [docs/QUICKSTART-WALKTHROUGH.md](docs/QUICKSTART-WALKTHROUGH.md) || **A developer using VS Code + Copilot** | Run [`setup.ps1`](#2-run-the-setup-wizard) → Read [CUSTOMIZATION.md](CUSTOMIZATION.md) → Read [docs/COPILOT-VSCODE-GUIDE.md](docs/COPILOT-VSCODE-GUIDE.md) |
+|------------|------------|
+| **Brand new to AI guardrails** | Read [What Is This?](#what-is-this-plain-english) → Run [`setup.ps1`](#2-run-the-setup-wizard) → Follow [docs/QUICKSTART-WALKTHROUGH.md](docs/QUICKSTART-WALKTHROUGH.md) |
+| **A developer using VS Code + Copilot** | Run [`setup.ps1`](#2-run-the-setup-wizard) → Read [CUSTOMIZATION.md](CUSTOMIZATION.md) → Read [docs/COPILOT-VSCODE-GUIDE.md](docs/COPILOT-VSCODE-GUIDE.md) |
 | **An AI agent setting up a project** | Read [AGENT-SETUP.md](AGENT-SETUP.md) (your entry point) |
 | **A CLI-first developer** | Run [`setup.ps1`](#2-run-the-setup-wizard) → Read [docs/CLI-GUIDE.md](docs/CLI-GUIDE.md) |
 | **Just browsing / evaluating** | Keep reading — [What Is This?](#what-is-this-plain-english) below |
@@ -310,7 +312,7 @@ In addition, the setup wizard installs **5 cross-stack agents** for SaaS-critica
 In addition to the preset reviewer agents, the template includes **5 pipeline agents** that automate the full Specify → Plan → Execute → Review → Ship workflow with handoff buttons:
 
 | Agent | Purpose | Hands Off To |
-|-------|---------|--------------||
+|-------|---------|--------------|
 | `specifier.agent.md` | Interview user to define what & why (Step 0) | Plan Hardener |
 | `plan-hardener.agent.md` | Harden draft plans into execution contracts | Executor |
 | `executor.agent.md` | Execute slices with validation gates | Reviewer Gate |
